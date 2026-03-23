@@ -12,7 +12,8 @@ import RecentExpenses from "@/components/RecentExpenses";
 import ExpenseTable from "@/components/ExpenseTable";
 import SettingsForm from "@/components/SettingsForm";
 import AddExpenseForm from "@/components/AddExpenseForm";
-import { Expense } from "@/lib/schema";
+import SipManager from "@/components/SipManager";
+import { Expense, RecurringExpense } from "@/lib/schema";
 
 interface DashboardClientProps {
   user: any;
@@ -30,6 +31,7 @@ interface DashboardClientProps {
   allExpenses: Expense[];
   catBudgets: any[];
   categories: { id: string; name: string; icon: string }[];
+  sips: RecurringExpense[];
 }
 
 export default function DashboardClient({
@@ -48,20 +50,36 @@ export default function DashboardClient({
   allExpenses,
   catBudgets,
   categories,
+  sips,
 }: DashboardClientProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"overview" | "expenses" | "settings">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "expenses" | "sips" | "settings">("overview");
   const [isAddOpen, setIsAddOpen] = useState(false);
 
   const staticPrimaryColor = "bg-text-primary text-bg shadow-lg shadow-black/10 border-none font-bold transition-all active:scale-95";
   const beautifulGradient = "bg-text-primary text-bg shadow-lg shadow-black/10 border-none";
+
+  const todayDate = new Date().getDate();
+  const upcomingSips = sips.filter(s => s.deductionDate >= todayDate).sort((a,b) => a.deductionDate - b.deductionDate);
+  const nextSip = upcomingSips[0] || [...sips].sort((a,b) => a.deductionDate - b.deductionDate)[0];
+
+  const getOrdinal = (n: number) => {
+    const s = ["th", "st", "nd", "rd"];
+    const v = n % 100;
+    return s[(v - 20) % 10] || s[v] || s[0];
+  };
 
   return (
     <div className="min-h-screen bg-bg text-text-primary flex flex-col md:pb-0 font-sans selection:bg-purple-500 selection:text-white">
       {/* Top Header */}
       <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-xl border-b border-border">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tighter">Trackr.</h1>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tighter leading-none">Trackr.</h1>
+            <p suppressHydrationWarning className="text-[10px] uppercase tracking-[0.2em] text-text-muted mt-0.5 font-bold">
+              {new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric", year: "numeric" })}
+            </p>
+          </div>
           <div className="flex items-center gap-5">
             <button 
               onClick={() => setIsAddOpen(true)}
@@ -104,6 +122,27 @@ export default function DashboardClient({
               </div>
             </div>
 
+            {/* Upcoming SIP Card */}
+            {nextSip && (
+              <div className="bg-text-primary text-bg border border-border p-6 rounded-3xl shadow-2xl relative overflow-hidden group">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-bg text-text-primary flex items-center justify-center text-2xl shadow-inner animate-pulse">
+                      ⏰
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-bg/70 uppercase tracking-[0.2em] mb-1">Upcoming Sync</p>
+                      <p className="text-xl font-bold tracking-tighter">{nextSip.name}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-black tracking-tighter">₹{parseFloat(nextSip.amount as any).toFixed(2)}</p>
+                    <p className="text-[10px] uppercase font-bold tracking-widest text-bg/70 mt-1">Due {nextSip.deductionDate}{getOrdinal(nextSip.deductionDate)}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Monthly Summary */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-card border border-border p-6 rounded-3xl shadow-sm">
@@ -143,6 +182,15 @@ export default function DashboardClient({
           </div>
         )}
 
+        {activeTab === "sips" && (
+          <div className="animate-fade-in space-y-6">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-2xl font-bold tracking-tighter">Investments</h2>
+            </div>
+            <SipManager sips={sips} />
+          </div>
+        )}
+
         {activeTab === "settings" && (
           <div className="animate-fade-in space-y-6 max-w-2xl mx-auto mt-4">
             <h2 className="text-2xl font-bold tracking-tighter mb-8">Preferences</h2>
@@ -159,7 +207,7 @@ export default function DashboardClient({
 
       {/* Desktop Tabs */}
       <div className="hidden md:flex fixed bottom-8 left-1/2 -translate-x-1/2 bg-card border border-border p-1 rounded-2xl shadow-2xl z-40 backdrop-blur-xl gap-1">
-        {(["overview", "expenses", "settings"] as const).map((tab) => (
+        {(["overview", "expenses", "sips", "settings"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -176,9 +224,10 @@ export default function DashboardClient({
       <nav className="fixed bottom-6 left-4 right-4 z-50 md:hidden">
         <div className="bg-[#1a1a1a]/80 backdrop-blur-3xl border border-white/5 rounded-[2rem] p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex items-center justify-between relative overflow-hidden">
           {([
-            { id: "overview", label: "Overview", icon: (isActive: boolean) => <span className={`text-2xl drop-shadow-sm transition-all duration-300 ${isActive ? 'scale-110 grayscale-0' : 'grayscale-[40%] opacity-80'}`}>🏠</span> },
-            { id: "expenses", label: "History", icon: (isActive: boolean) => <span className={`text-2xl drop-shadow-sm transition-all duration-300 ${isActive ? 'scale-110 grayscale-0' : 'grayscale-[40%] opacity-80'}`}>📋</span> },
-            { id: "settings", label: "Settings", icon: (isActive: boolean) => <span className={`text-2xl drop-shadow-sm transition-all duration-300 ${isActive ? 'scale-110 grayscale-0' : 'grayscale-[40%] opacity-80'}`}>⚙️</span> },
+            { id: "overview", label: "Overview", icon: (isActive: boolean) => <span className={`text-2xl drop-shadow-sm transition-all duration-300 ${isActive ? 'scale-110 grayscale-0' : 'grayscale-[50%] opacity-80'}`}>🏠</span> },
+            { id: "expenses", label: "History", icon: (isActive: boolean) => <span className={`text-2xl drop-shadow-sm transition-all duration-300 ${isActive ? 'scale-110 grayscale-0' : 'grayscale-[50%] opacity-80'}`}>📋</span> },
+            { id: "sips", label: "Investments", icon: (isActive: boolean) => <span className={`text-2xl drop-shadow-sm transition-all duration-300 ${isActive ? 'scale-110 grayscale-0' : 'grayscale-[50%] opacity-80'}`}>📈</span> },
+            { id: "settings", label: "Settings", icon: (isActive: boolean) => <span className={`text-2xl drop-shadow-sm transition-all duration-300 ${isActive ? 'scale-110 grayscale-0' : 'grayscale-[50%] opacity-80'}`}>⚙️</span> },
             { id: "add", label: "Add", icon: (isActive: boolean) => (
               <div className={`w-11 h-11 rounded-full flex items-center justify-center bg-text-primary text-bg shadow-lg transition-transform duration-300 ${isActive ? 'rotate-[135deg] bg-red-400 text-white' : 'hover:scale-105 active:scale-95'}`}>
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>

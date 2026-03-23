@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, numeric, timestamp, date } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, numeric, timestamp, date, integer } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
 export const users = pgTable("users", {
@@ -56,10 +56,24 @@ export const categoryBudgets = pgTable("category_budgets", {
   month: text("month").notNull(),
 });
 
+export const recurringExpenses = pgTable("recurring_expenses", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
+  deductionDate: integer("deduction_date").notNull(),
+  paymentMethod: text("payment_method").default("online").notNull(),
+  lastProcessed: timestamp("last_processed"),
+  createdAt: timestamp("created_at").default(sql`now()`),
+});
+
 export type User = typeof users.$inferSelect;
 export type UserCategory = typeof userCategories.$inferSelect;
 export type Expense = typeof expenses.$inferSelect;
 export type Income = typeof incomes.$inferSelect;
 export type CategoryBudget = typeof categoryBudgets.$inferSelect;
+export type RecurringExpense = typeof recurringExpenses.$inferSelect;
 export type NewExpense = typeof expenses.$inferInsert;
 export type NewIncome = typeof incomes.$inferInsert;

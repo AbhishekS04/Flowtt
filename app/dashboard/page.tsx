@@ -1,10 +1,11 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { users, expenses, categoryBudgets, userCategories, incomes } from "@/lib/schema";
+import { users, expenses, categoryBudgets, userCategories, incomes, recurringExpenses } from "@/lib/schema";
 import { eq, and, gte, lte } from "drizzle-orm";
 import { getMonthString } from "@/lib/utils";
 import DashboardClient from "@/components/DashboardClient";
+import { syncUserSIPs } from "@/lib/syncSips";
 
 async function getOrCreateUser(clerkUserId: string) {
   const existing = await db.select().from(users).where(eq(users.clerkUserId, clerkUserId)).limit(1);
@@ -42,6 +43,7 @@ export default async function DashboardPage() {
   let user;
   try {
     user = await getOrCreateUser(userId);
+    await syncUserSIPs(user.id);
   } catch (error) {
     console.error("Database connection error:", error);
     return (
@@ -64,7 +66,7 @@ export default async function DashboardPage() {
   const startDate = `${year}-${mon}-01`;
   const endDate = `${year}-${mon}-${new Date(Number(year), Number(mon), 0).getDate()}`;
 
-  const [monthExpenses, catBudgets, customCats, monthIncomes, allExpenses, allIncomes] = await Promise.all([
+  const [monthExpenses, catBudgets, customCats, monthIncomes, allExpenses, allIncomes, userSips] = await Promise.all([
     db.select().from(expenses).where(
       and(eq(expenses.userId, user.id), gte(expenses.date, startDate), lte(expenses.date, endDate))
     ),
@@ -77,6 +79,7 @@ export default async function DashboardPage() {
     ),
     db.select().from(expenses).where(eq(expenses.userId, user.id)),
     db.select().from(incomes).where(eq(incomes.userId, user.id)),
+    db.select().from(recurringExpenses).where(eq(recurringExpenses.userId, user.id)),
   ]);
 
   const totalSpent = monthExpenses.reduce((sum, e) => sum + parseFloat(e.amount), 0);
@@ -130,6 +133,7 @@ export default async function DashboardPage() {
       allExpenses={monthExpensesSorted}
       catBudgets={catBudgets}
       categories={customCats}
+      sips={userSips}
     />
   );
 }
