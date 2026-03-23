@@ -13,7 +13,8 @@ import ExpenseTable from "@/components/ExpenseTable";
 import SettingsForm from "@/components/SettingsForm";
 import AddExpenseForm from "@/components/AddExpenseForm";
 import SipManager from "@/components/SipManager";
-import { Expense, RecurringExpense } from "@/lib/schema";
+import GoalsManager from "@/components/GoalsManager";
+import { Expense, RecurringExpense, Goal } from "@/lib/schema";
 
 interface DashboardClientProps {
   user: any;
@@ -32,6 +33,7 @@ interface DashboardClientProps {
   catBudgets: any[];
   categories: { id: string; name: string; icon: string }[];
   sips: RecurringExpense[];
+  goals: Goal[];
 }
 
 export default function DashboardClient({
@@ -51,9 +53,10 @@ export default function DashboardClient({
   catBudgets,
   categories,
   sips,
+  goals,
 }: DashboardClientProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"overview" | "expenses" | "sips" | "settings">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "expenses" | "goals" | "sips" | "settings">("overview");
   const [isAddOpen, setIsAddOpen] = useState(false);
 
   const staticPrimaryColor = "bg-text-primary text-bg shadow-lg shadow-black/10 border-none font-bold transition-all active:scale-95";
@@ -87,9 +90,7 @@ export default function DashboardClient({
             >
               + ADD
             </button>
-            <div className="ring-1 ring-border rounded-full p-0.5">
-              <UserButton appearance={{ elements: { avatarBox: "w-8 h-8" } }} />
-            </div>
+            <UserButton appearance={{ elements: { avatarBox: "w-9 h-9 border border-border" } }} />
           </div>
         </div>
       </header>
@@ -204,6 +205,12 @@ export default function DashboardClient({
           </div>
         )}
 
+        {activeTab === "goals" && (
+          <div className="animate-fade-in space-y-6">
+            <GoalsManager initialGoals={goals} />
+          </div>
+        )}
+
         {activeTab === "settings" && (
           <div className="animate-fade-in space-y-6 max-w-2xl mx-auto mt-4">
             <h2 className="text-2xl font-bold tracking-tighter mb-8">Preferences</h2>
@@ -220,7 +227,7 @@ export default function DashboardClient({
 
       {/* Desktop Tabs */}
       <div className="hidden md:flex fixed bottom-8 left-1/2 -translate-x-1/2 bg-card border border-border p-1 rounded-2xl shadow-2xl z-40 backdrop-blur-xl gap-1">
-        {(["overview", "expenses", "sips", "settings"] as const).map((tab) => (
+        {(["overview", "expenses", "goals", "sips", "settings"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -237,10 +244,11 @@ export default function DashboardClient({
       <nav className="fixed bottom-6 left-4 right-4 z-50 md:hidden">
         <div className="bg-[#1a1a1a]/80 backdrop-blur-3xl border border-white/5 rounded-[2rem] p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex items-center justify-between relative overflow-hidden">
           {([
-            { id: "overview", label: "Overview", icon: (isActive: boolean) => <span className={`text-2xl drop-shadow-sm transition-all duration-300 ${isActive ? 'scale-110 grayscale-0' : 'grayscale-[50%] opacity-80'}`}>🏠</span> },
-            { id: "expenses", label: "History", icon: (isActive: boolean) => <span className={`text-2xl drop-shadow-sm transition-all duration-300 ${isActive ? 'scale-110 grayscale-0' : 'grayscale-[50%] opacity-80'}`}>📋</span> },
-            { id: "sips", label: "Investments", icon: (isActive: boolean) => <span className={`text-2xl drop-shadow-sm transition-all duration-300 ${isActive ? 'scale-110 grayscale-0' : 'grayscale-[50%] opacity-80'}`}>📈</span> },
-            { id: "settings", label: "Settings", icon: (isActive: boolean) => <span className={`text-2xl drop-shadow-sm transition-all duration-300 ${isActive ? 'scale-110 grayscale-0' : 'grayscale-[50%] opacity-80'}`}>⚙️</span> },
+            { id: "overview", label: "Overview", icon: (isActive: boolean) => <span className={`text-xl drop-shadow-sm transition-all duration-300 ${isActive ? 'scale-110 grayscale-0' : 'grayscale-[50%] opacity-80'}`}>🏠</span> },
+            { id: "expenses", label: "History", icon: (isActive: boolean) => <span className={`text-xl drop-shadow-sm transition-all duration-300 ${isActive ? 'scale-110 grayscale-0' : 'grayscale-[50%] opacity-80'}`}>📋</span> },
+            { id: "goals", label: "Goals", icon: (isActive: boolean) => <span className={`text-xl drop-shadow-sm transition-all duration-300 ${isActive ? 'scale-110 grayscale-0' : 'grayscale-[50%] opacity-80'}`}>🎯</span> },
+            { id: "sips", label: "Investments", icon: (isActive: boolean) => <span className={`text-xl drop-shadow-sm transition-all duration-300 ${isActive ? 'scale-110 grayscale-0' : 'grayscale-[50%] opacity-80'}`}>📈</span> },
+            { id: "settings", label: "Settings", icon: (isActive: boolean) => <span className={`text-xl drop-shadow-sm transition-all duration-300 ${isActive ? 'scale-110 grayscale-0' : 'grayscale-[50%] opacity-80'}`}>⚙️</span> },
             { id: "add", label: "Add", icon: (isActive: boolean) => (
               <div className={`w-11 h-11 rounded-full flex items-center justify-center bg-text-primary text-bg shadow-lg transition-transform duration-300 ${isActive ? 'rotate-[135deg] bg-red-400 text-white' : 'hover:scale-105 active:scale-95'}`}>
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
@@ -267,7 +275,7 @@ export default function DashboardClient({
                 {isActive && tab.id !== 'add' && (
                   <motion.div
                     layoutId="mobile-active-tab"
-                    className="absolute inset-0 bg-text-primary rounded-full -z-10 shadow-lg"
+                    className="absolute inset-0 m-auto w-12 h-12 bg-text-primary rounded-full -z-10 shadow-lg"
                     initial={false}
                     transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   />

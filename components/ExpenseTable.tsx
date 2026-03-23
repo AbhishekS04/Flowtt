@@ -22,6 +22,7 @@ export default function ExpenseTable({ initialExpenses, categories }: ExpenseTab
   };
   const [selectedMonth, setSelectedMonth] = useState(getMonthString());
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [isMonthOpen, setIsMonthOpen] = useState(false);
   const [isCatOpen, setIsCatOpen] = useState(false);
   const [isEditCatOpen, setIsEditCatOpen] = useState(false);
@@ -128,8 +129,18 @@ export default function ExpenseTable({ initialExpenses, categories }: ExpenseTab
     document.body.removeChild(link);
   };
 
-  const totalPages = Math.ceil(expenses.length / ITEMS_PER_PAGE);
-  const paginated = expenses.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const filteredData = expenses.filter(e => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    const searchMatches = 
+      (e.note && e.note.toLowerCase().includes(q)) || 
+      e.category.toLowerCase().includes(q) || 
+      e.amount.toString().includes(q);
+    return searchMatches;
+  });
+
+  const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
+  const paginated = filteredData.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   const months: string[] = [];
   const now = new Date();
@@ -144,7 +155,21 @@ export default function ExpenseTable({ initialExpenses, categories }: ExpenseTab
     <div className="space-y-8">
       {/* Filters */}
       <div className="flex flex-col md:flex-row gap-6 justify-between items-start md:items-center">
-        <div className="flex flex-col md:flex-row gap-6 w-full md:w-auto z-50">
+        <div className="flex flex-col md:flex-row gap-6 w-full md:flex-grow z-50">
+          {/* Search Filter */}
+          <div className="relative min-w-[140px] md:min-w-[200px]">
+            <input
+              type="text"
+              placeholder="SEARCH..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="bg-transparent border-b border-border text-text-primary px-0 py-2 text-[10px] focus:outline-none focus:border-primary uppercase tracking-widest font-bold w-full placeholder:text-text-muted"
+            />
+          </div>
+
           {/* Month Filter */}
           <div className="relative min-w-[140px]">
             <button

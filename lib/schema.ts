@@ -69,11 +69,26 @@ export const recurringExpenses = pgTable("recurring_expenses", {
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 
+export const goals = pgTable("goals", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  targetAmount: numeric("target_amount", { precision: 10, scale: 2 }).notNull(),
+  currentAmount: numeric("current_amount", { precision: 10, scale: 2 }).default("0").notNull(),
+  icon: text("icon").default("🎯").notNull(),
+  deadline: date("deadline"),
+  createdAt: timestamp("created_at").default(sql`now()`),
+});
+
 export type User = typeof users.$inferSelect;
 export type UserCategory = typeof userCategories.$inferSelect;
 export type Expense = typeof expenses.$inferSelect;
 export type Income = typeof incomes.$inferSelect;
 export type CategoryBudget = typeof categoryBudgets.$inferSelect;
 export type RecurringExpense = typeof recurringExpenses.$inferSelect;
+export type Goal = typeof goals.$inferSelect;
 export type NewExpense = typeof expenses.$inferInsert;
 export type NewIncome = typeof incomes.$inferInsert;
+export type NewGoal = typeof goals.$inferInsert;
