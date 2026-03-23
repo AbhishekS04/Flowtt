@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import { UserButton } from "@clerk/nextjs";
 import BudgetCard from "@/components/BudgetCard";
 import NotificationBanner from "@/components/NotificationBanner";
@@ -172,34 +173,51 @@ export default function DashboardClient({
       </div>
 
       {/* Mobile Bottom Navigation (Floating Capsule) */}
-      <nav className="fixed bottom-8 left-6 right-6 z-50 md:hidden">
-        <div className="bg-text-primary/10 backdrop-blur-2xl border border-white/10 rounded-full p-1 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center justify-between">
-          {([{id: "overview", label: "Overview", icon: "🏠"}, {id: "expenses", label: "History", icon: "📋"}, {id: "settings", label: "Settings", icon: "⚙️"}] as const).map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center justify-center flex-1 py-3 px-2 rounded-full transition-all duration-500 relative group ${
-                activeTab === tab.id ? "bg-text-primary text-bg shadow-xl" : "text-text-muted hover:text-text-primary"
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <span className={`text-lg transition-transform duration-500 ${activeTab === tab.id ? "scale-110" : "group-hover:scale-110"}`}>{tab.icon}</span>
-                {activeTab === tab.id && (
-                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] animate-in fade-in slide-in-from-left-2 duration-300">{tab.label}</span>
-                )}
+      <nav className="fixed bottom-6 left-4 right-4 z-50 md:hidden">
+        <div className="bg-[#1a1a1a]/80 backdrop-blur-3xl border border-white/5 rounded-[2rem] p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex items-center justify-between relative overflow-hidden">
+          {([
+            { id: "overview", label: "Overview", icon: (isActive: boolean) => <span className={`text-2xl drop-shadow-sm transition-all duration-300 ${isActive ? 'scale-110 grayscale-0' : 'grayscale-[40%] opacity-80'}`}>🏠</span> },
+            { id: "expenses", label: "History", icon: (isActive: boolean) => <span className={`text-2xl drop-shadow-sm transition-all duration-300 ${isActive ? 'scale-110 grayscale-0' : 'grayscale-[40%] opacity-80'}`}>📋</span> },
+            { id: "settings", label: "Settings", icon: (isActive: boolean) => <span className={`text-2xl drop-shadow-sm transition-all duration-300 ${isActive ? 'scale-110 grayscale-0' : 'grayscale-[40%] opacity-80'}`}>⚙️</span> },
+            { id: "add", label: "Add", icon: (isActive: boolean) => (
+              <div className={`w-11 h-11 rounded-full flex items-center justify-center bg-text-primary text-bg shadow-lg transition-transform duration-300 ${isActive ? 'rotate-[135deg] bg-red-400 text-white' : 'hover:scale-105 active:scale-95'}`}>
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
               </div>
-            </button>
-          ))}
+            ) }
+          ] as const).map((tab) => {
+            const isActive = activeTab === tab.id || (tab.id === 'add' && isAddOpen);
+            
+            return (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  if (tab.id === 'add') {
+                    setIsAddOpen(!isAddOpen);
+                  } else {
+                    setActiveTab(tab.id as any);
+                    setIsAddOpen(false);
+                  }
+                }}
+                className={`flex flex-col items-center justify-center flex-1 h-14 rounded-full relative z-10 tap-highlight-transparent ${
+                  isActive ? "text-bg" : "text-text-muted hover:text-text-primary"
+                }`}
+              >
+                {isActive && tab.id !== 'add' && (
+                  <motion.div
+                    layoutId="mobile-active-tab"
+                    className="absolute inset-0 bg-text-primary rounded-full -z-10 shadow-lg"
+                    initial={false}
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  />
+                )}
+                <div className={`transition-transform duration-300 flex flex-col items-center ${isActive && tab.id !== 'add' ? "-translate-y-0.5" : ""}`}>
+                  {tab.icon(isActive)}
+                </div>
+              </button>
+            );
+          })}
         </div>
       </nav>
-
-      {/* Mobile FAB */}
-      <button
-        onClick={() => setIsAddOpen(true)}
-        className={`md:hidden fixed bottom-24 right-6 w-14 h-14 rounded-full flex items-center justify-center text-3xl font-light z-40 active:scale-90 transition-transform ${staticPrimaryColor}`}
-      >
-        +
-      </button>
 
       {/* Add Expense Modal/BottomSheet */}
       {isAddOpen && (

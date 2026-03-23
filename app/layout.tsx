@@ -6,6 +6,16 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Trackr — Expense Tracker",
   description: "Track your expenses, manage budgets, and gain insights into your spending.",
+  manifest: "/manifest.json",
+  themeColor: "#000000",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Trackr",
+  },
+  icons: {
+    apple: "/icon.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

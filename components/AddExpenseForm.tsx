@@ -86,11 +86,6 @@ export default function AddExpenseForm({ onSuccess, categories }: AddExpenseForm
     "w-full bg-transparent border-b border-border text-text-primary px-0 py-2 text-xl focus:outline-none focus:border-primary transition-colors placeholder:text-text-muted/30 rounded-none appearance-none";
 
   const [isOpen, setIsOpen] = useState(false);
-  const [search, setSearch] = useState("");
-
-  const filteredCategories = categories.filter(c => 
-    c.name.toLowerCase().includes(search.toLowerCase())
-  );
 
   const selectedCategory = categories.find((c) => c.name === form.category);
 
@@ -166,7 +161,6 @@ export default function AddExpenseForm({ onSuccess, categories }: AddExpenseForm
                 type="button"
                 onClick={() => {
                   setIsOpen(!isOpen);
-                  if (!isOpen) setSearch("");
                 }}
                 className={`${inputClass} flex items-center justify-between group-focus-within/select:border-primary transition-all duration-300`}
               >
@@ -197,26 +191,15 @@ export default function AddExpenseForm({ onSuccess, categories }: AddExpenseForm
                     onClick={() => setIsOpen(false)}
                   />
                   <div className="absolute top-full left-0 right-0 mt-3 z-50 bg-card border border-border/80 shadow-[0_20px_60px_rgba(0,0,0,0.6)] rounded-3xl overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300 ease-out">
-                    <div className="p-3 border-b border-border/50">
-                      <input
-                        type="text"
-                        placeholder="Search for category..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="w-full bg-text-primary/5 border border-border/40 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:border-text-primary/30 transition-all placeholder:text-text-muted/40 font-medium"
-                        autoFocus
-                      />
-                    </div>
                     <div className="max-h-64 overflow-y-auto py-2 custom-scrollbar">
-                      {filteredCategories.length > 0 ? (
-                        filteredCategories.map((c) => (
+                      {categories.length > 0 ? (
+                        categories.map((c) => (
                           <button
                             key={c.id}
                             type="button"
                             onClick={() => {
                               setForm(p => ({ ...p, category: c.name }));
                               setIsOpen(false);
-                              setSearch("");
                             }}
                             className={`w-full flex items-center gap-4 px-5 py-4 text-left transition-all duration-300 group/option ${
                               form.category === c.name 
