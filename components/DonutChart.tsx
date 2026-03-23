@@ -1,5 +1,4 @@
-"use client";
-
+import { useState } from "react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { getCategoryColor, formatCurrency } from "@/lib/utils";
 
@@ -8,9 +7,16 @@ interface DonutChartProps {
 }
 
 export default function DonutChart({ categoryBreakdown }: DonutChartProps) {
+  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
+  
   const data = Object.entries(categoryBreakdown)
     .filter(([, v]) => v > 0)
     .map(([name, value]) => ({ name, value }));
+
+  const total = data.reduce((acc, curr) => acc + curr.value, 0);
+  const hoveredValue = hoveredCategory 
+    ? data.find(d => d.name === hoveredCategory)?.value 
+    : total;
 
   if (data.length === 0) {
     return (
@@ -32,13 +38,20 @@ export default function DonutChart({ categoryBreakdown }: DonutChartProps) {
               cy="50%"
               innerRadius={75}
               outerRadius={95}
-              paddingAngle={4}
+              paddingAngle={6}
               dataKey="value"
               stroke="none"
-              cornerRadius={4}
+              cornerRadius={6}
+              onMouseEnter={(_, index) => setHoveredCategory(data[index].name)}
+              onMouseLeave={() => setHoveredCategory(null)}
             >
               {data.map((entry, index) => (
-                <Cell key={index} fill={getCategoryColor(entry.name)} />
+                <Cell 
+                  key={index} 
+                  fill={getCategoryColor(entry.name)} 
+                  className="outline-none focus:outline-none transition-opacity duration-300 pointer-events-auto"
+                  style={{ opacity: hoveredCategory && hoveredCategory !== entry.name ? 0.3 : 1 }}
+                />
               ))}
             </Pie>
             <Tooltip
@@ -53,13 +66,16 @@ export default function DonutChart({ categoryBreakdown }: DonutChartProps) {
               }}
               itemStyle={{ color: "#ffffff", fontWeight: 700, fontSize: "12px" }}
               formatter={(value: number) => [formatCurrency(value), ""]}
+              cursor={false}
             />
           </PieChart>
         </ResponsiveContainer>
-        <div className="absolute flex flex-col items-center pointer-events-none">
-          <span className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em]">Total</span>
-          <span className="text-lg font-bold text-text-primary tracking-tighter">
-            {formatCurrency(data.reduce((acc, curr) => acc + curr.value, 0))}
+        <div className="absolute flex flex-col items-center pointer-events-none transition-all duration-300">
+          <span className="text-[8px] font-bold text-text-muted uppercase tracking-[0.3em] mb-1">
+            {hoveredCategory ? hoveredCategory : "Total Spend"}
+          </span>
+          <span className="text-xl font-bold text-text-primary tracking-tighter">
+            {formatCurrency(hoveredValue || 0)}
           </span>
         </div>
       </div>

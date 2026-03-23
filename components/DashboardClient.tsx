@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import BudgetCard from "@/components/BudgetCard";
 import NotificationBanner from "@/components/NotificationBanner";
@@ -39,10 +40,12 @@ export default function DashboardClient({
   catBudgets,
   categories,
 }: DashboardClientProps) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"overview" | "expenses" | "settings">("overview");
   const [isAddOpen, setIsAddOpen] = useState(false);
 
-  const beautifulGradient = "bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/25 border-none";
+  const staticPrimaryColor = "bg-text-primary text-bg shadow-lg shadow-black/10 border-none font-bold transition-all active:scale-95";
+  const beautifulGradient = "bg-text-primary text-bg shadow-lg shadow-black/10 border-none";
 
   return (
     <div className="min-h-screen bg-bg text-text-primary flex flex-col pb-[85px] md:pb-0 font-sans selection:bg-purple-500 selection:text-white">
@@ -53,7 +56,7 @@ export default function DashboardClient({
           <div className="flex items-center gap-5">
             <button 
               onClick={() => setIsAddOpen(true)}
-              className={`hidden md:flex items-center justify-center font-bold px-6 py-2 rounded-full hover:opacity-90 transition-opacity text-xs tracking-widest uppercase ${beautifulGradient}`}
+              className={`hidden md:flex items-center justify-center font-bold px-6 py-2 rounded-full hover:opacity-90 transition-opacity text-xs tracking-widest uppercase ${staticPrimaryColor}`}
             >
               + ADD
             </button>
@@ -137,7 +140,7 @@ export default function DashboardClient({
       {/* Mobile FAB */}
       <button
         onClick={() => setIsAddOpen(true)}
-        className={`md:hidden fixed bottom-24 right-6 w-14 h-14 rounded-full flex items-center justify-center text-3xl font-light z-40 active:scale-90 transition-transform ${beautifulGradient}`}
+        className={`md:hidden fixed bottom-24 right-6 w-14 h-14 rounded-full flex items-center justify-center text-3xl font-light z-40 active:scale-90 transition-transform ${staticPrimaryColor}`}
       >
         +
       </button>
@@ -155,7 +158,7 @@ export default function DashboardClient({
                 categories={categories}
                 onSuccess={() => {
                   setIsAddOpen(false);
-                  window.location.reload();
+                  router.refresh();
                 }} 
               />
             </div>

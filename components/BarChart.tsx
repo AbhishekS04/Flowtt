@@ -37,11 +37,10 @@ export default function DailyBarChart({ dailyTotals, month }: DailyBarChartProps
 
   return (
     <div className="bg-card border border-border p-6 sm:p-8 shadow-sm group hover:border-text-muted transition-colors relative overflow-hidden">
-      <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-        <div className="w-24 h-24 bg-purple-500 rounded-full blur-3xl" />
+      <div className="flex items-center gap-3 mb-8">
+        <span className="w-1 h-3 bg-text-primary rounded-full transition-transform group-hover:scale-y-125 duration-500" />
+        <h2 className="text-[10px] font-bold text-text-primary tracking-[0.2em] uppercase">Daily Spend Density</h2>
       </div>
-      
-      <h2 className="text-[10px] font-bold text-text-muted mb-8 tracking-widest uppercase">Daily Spend Density</h2>
       <ResponsiveContainer width="100%" height={240}>
         <RechartsBarChart data={data} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
           <defs>

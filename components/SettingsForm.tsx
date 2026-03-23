@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { getMonthString } from "@/lib/utils";
 
@@ -16,6 +17,7 @@ interface SettingsFormProps {
 }
 
 export default function SettingsForm({ initialBudget, initialCategoryBudgets, categories }: SettingsFormProps) {
+  const router = useRouter();
   const [monthlyBudget, setMonthlyBudget] = useState(String(initialBudget));
   const [categoryLimits, setCategoryLimits] = useState<Record<string, string>>(() => {
     const limits: Record<string, string> = {};
@@ -97,7 +99,7 @@ export default function SettingsForm({ initialBudget, initialCategoryBudgets, ca
       toast.success("Category added");
       setNewCatName("");
       setNewCatIcon("");
-      setTimeout(() => window.location.reload(), 500);
+      setTimeout(() => router.refresh(), 500);
     } else {
       toast.error("Failed to add category");
     }
@@ -108,7 +110,7 @@ export default function SettingsForm({ initialBudget, initialCategoryBudgets, ca
     const res = await fetch(`/api/categories/${id}`, { method: "DELETE" });
     if (res.ok) {
       toast.success("Category deleted");
-      setTimeout(() => window.location.reload(), 500);
+      setTimeout(() => router.refresh(), 500);
     } else {
       toast.error("Failed to delete category");
     }
@@ -123,7 +125,7 @@ export default function SettingsForm({ initialBudget, initialCategoryBudgets, ca
     if (res.ok) {
       toast.success("Category updated");
       setEditingId(null);
-      setTimeout(() => window.location.reload(), 500);
+      setTimeout(() => router.refresh(), 500);
     } else {
       toast.error("Failed to update category");
     }
@@ -133,7 +135,7 @@ export default function SettingsForm({ initialBudget, initialCategoryBudgets, ca
   const inputClass =
     "bg-transparent border-b border-border text-text-primary px-0 py-2.5 text-lg focus:outline-none focus:border-primary transition-colors placeholder:text-text-muted/30 appearance-none rounded-none";
   const btnClass =
-    "bg-primary text-bg font-bold py-2.5 px-6 text-xs uppercase tracking-widest transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed border border-primary";
+    "bg-text-primary text-bg font-bold py-2.5 px-6 text-[10px] uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed border-none shadow-lg shadow-black/5";
 
   return (
     <div className="animate-fade-in pb-10">

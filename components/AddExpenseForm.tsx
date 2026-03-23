@@ -142,9 +142,9 @@ export default function AddExpenseForm({ onSuccess, categories }: AddExpenseForm
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/25 border-none font-bold rounded-full py-4 text-sm uppercase tracking-widest transition-transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="w-full bg-text-primary text-bg shadow-lg shadow-black/10 border-none font-bold rounded-full py-4 text-[10px] uppercase tracking-widest transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
-          {loading ? "Saving..." : "Save Expense"}
+          {loading ? "Saving..." : "SAVE EXPENSE"}
         </button>
       </div>
     </form>
