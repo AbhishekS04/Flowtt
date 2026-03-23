@@ -152,9 +152,9 @@ export default function GoalsManager({ initialGoals }: GoalsManagerProps) {
 
       <AnimatePresence>
          {isAddOpen && (
-            <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
+            <div className="fixed inset-0 z-[60] flex items-end md:items-center justify-center">
                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-bg/80 backdrop-blur-sm" onClick={() => setIsAddOpen(false)} />
-               <motion.div initial={{ scale: 0.95, opacity: 0, y: 50 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 50 }} className="relative bg-card border border-border p-8 rounded-t-3xl md:rounded-3xl w-full max-w-md shadow-2xl">
+               <motion.div initial={{ scale: 0.95, opacity: 0, y: 50 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 50 }} className="relative bg-card border border-border p-8 pb-16 md:pb-8 rounded-t-3xl md:rounded-3xl w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto">
                  <button onClick={() => setIsAddOpen(false)} className="absolute top-6 right-6 w-8 h-8 rounded-full bg-border flex items-center justify-center text-text-muted hover:text-text-primary">✕</button>
                  <h2 className="text-xl font-bold tracking-tighter mb-6">New Goal</h2>
                  <form onSubmit={handleAddGoal} className="space-y-6">
