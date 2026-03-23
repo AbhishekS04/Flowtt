@@ -291,9 +291,9 @@ export default function DashboardClient({
 
       {/* Add Expense Modal/BottomSheet */}
       {isAddOpen && (
-        <div className="fixed inset-0 z-[60] flex items-end md:items-center justify-center">
+        <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center">
           <div className="absolute inset-0 bg-bg/80 backdrop-blur-sm animate-fade-in" onClick={() => setIsAddOpen(false)}></div>
-          <div className="relative w-full md:w-[480px] bg-card border border-border md:rounded-3xl rounded-t-3xl p-8 pb-16 md:pb-8 shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto">
+          <div className="relative w-full md:w-[480px] bg-card border border-border md:rounded-3xl rounded-t-3xl p-8 pb-32 md:pb-8 shadow-2xl animate-slide-up max-h-[85dvh] overflow-y-auto">
             <button onClick={() => setIsAddOpen(false)} className="absolute top-6 right-6 w-8 h-8 flex items-center justify-center rounded-full bg-border text-text-muted hover:text-text-primary transition-colors text-lg leading-none">
               ✕
             </button>

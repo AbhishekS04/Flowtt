@@ -4,6 +4,7 @@ import { useState } from "react";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { createPortal } from "react-dom";
 
 interface GoalsManagerProps {
   initialGoals: any[];
@@ -151,10 +152,10 @@ export default function GoalsManager({ initialGoals }: GoalsManagerProps) {
       </div>
 
       <AnimatePresence>
-         {isAddOpen && (
-            <div className="fixed inset-0 z-[60] flex items-end md:items-center justify-center">
+         {isAddOpen && typeof document !== "undefined" && createPortal(
+            <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center">
                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-bg/80 backdrop-blur-sm" onClick={() => setIsAddOpen(false)} />
-               <motion.div initial={{ scale: 0.95, opacity: 0, y: 50 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 50 }} className="relative bg-card border border-border p-8 pb-16 md:pb-8 rounded-t-3xl md:rounded-3xl w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto">
+               <motion.div initial={{ scale: 0.95, opacity: 0, y: 50 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 50 }} className="relative bg-card border border-border p-8 pb-32 md:pb-8 rounded-t-3xl md:rounded-3xl w-full max-w-md shadow-2xl max-h-[85dvh] overflow-y-auto">
                  <button onClick={() => setIsAddOpen(false)} className="absolute top-6 right-6 w-8 h-8 rounded-full bg-border flex items-center justify-center text-text-muted hover:text-text-primary">✕</button>
                  <h2 className="text-xl font-bold tracking-tighter mb-6">New Goal</h2>
                  <form onSubmit={handleAddGoal} className="space-y-6">
@@ -179,7 +180,8 @@ export default function GoalsManager({ initialGoals }: GoalsManagerProps) {
                     <button type="submit" className="w-full bg-text-primary text-bg font-bold uppercase tracking-widest text-xs py-4 rounded-full mt-4 hover:opacity-90 transition-opacity">Let's Go</button>
                  </form>
                </motion.div>
-            </div>
+            </div>,
+            document.body
          )}
       </AnimatePresence>
     </div>

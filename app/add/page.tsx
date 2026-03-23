@@ -21,7 +21,7 @@ export default async function AddPage() {
   return (
     <div className="min-h-screen bg-bg">
       <Navbar />
-      <main className="max-w-xl mx-auto px-6 py-12">
+      <main className="max-w-xl mx-auto px-6 py-12 pb-32">
         <div className="bg-card border border-border rounded-3xl p-10 shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 left-0 w-1 h-full bg-text-primary/10" />
           <AddExpenseForm 
