@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { users, expenses } from "@/lib/schema";
+import { users, incomes } from "@/lib/schema";
 import { eq, and, gte, lte, sql } from "drizzle-orm";
 import { getMonthString } from "@/lib/utils";
 
@@ -19,7 +19,6 @@ export async function GET(request: Request) {
   const user = await getOrCreateUser(userId);
   const { searchParams } = new URL(request.url);
   const month = searchParams.get("month") ?? getMonthString();
-  const category = searchParams.get("category");
 
   const [year, mon] = month.split("-");
   const startDate = `${year}-${mon}-01`;
@@ -27,16 +26,15 @@ export async function GET(request: Request) {
 
   let query = db
     .select()
-    .from(expenses)
+    .from(incomes)
     .where(
       and(
-        eq(expenses.userId, user.id),
-        gte(expenses.date, startDate),
-        lte(expenses.date, endDate),
-        category ? eq(expenses.category, category) : undefined
+        eq(incomes.userId, user.id),
+        gte(incomes.date, startDate),
+        lte(incomes.date, endDate)
       )
     )
-    .orderBy(sql`${expenses.date} DESC, ${expenses.createdAt} DESC`);
+    .orderBy(sql`${incomes.date} DESC, ${incomes.createdAt} DESC`);
 
   const data = await query;
   return NextResponse.json(data);
@@ -48,16 +46,16 @@ export async function POST(request: Request) {
 
   const user = await getOrCreateUser(userId);
   const body = await request.json();
-  const { amount, category, date, note, paymentMethod } = body;
+  const { amount, source, date, note, paymentMethod } = body;
 
   if (!amount || amount <= 0) return NextResponse.json({ error: "Amount must be > 0" }, { status: 400 });
-  if (!category) return NextResponse.json({ error: "Category is required" }, { status: 400 });
+  if (!source) return NextResponse.json({ error: "Source is required" }, { status: 400 });
   if (!date) return NextResponse.json({ error: "Date is required" }, { status: 400 });
 
-  const created = await db.insert(expenses).values({
+  const created = await db.insert(incomes).values({
     userId: user.id,
     amount: String(amount),
-    category,
+    source,
     date,
     note: note ?? null,
     paymentMethod: paymentMethod ?? "online",

@@ -38,6 +38,8 @@ export default async function SettingsPage() {
         </div>
         <SettingsForm
           initialBudget={parseFloat(user.monthlyBudget ?? "0")}
+          initialCash={parseFloat(user.initialCashBalance || "0")}
+          initialOnline={parseFloat(user.initialOnlineBalance || "0")}
           initialCategoryBudgets={catBudgets.map((cb) => ({
             category: cb.category,
             limitAmount: cb.limitAmount,

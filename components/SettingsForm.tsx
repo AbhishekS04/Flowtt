@@ -12,13 +12,17 @@ interface SettingsData {
 
 interface SettingsFormProps {
   initialBudget: number;
+  initialCash: number;
+  initialOnline: number;
   initialCategoryBudgets: Array<{ category: string; limitAmount: string }>;
   categories: { id: string; name: string; icon: string }[];
 }
 
-export default function SettingsForm({ initialBudget, initialCategoryBudgets, categories }: SettingsFormProps) {
+export default function SettingsForm({ initialBudget, initialCash, initialOnline, initialCategoryBudgets, categories }: SettingsFormProps) {
   const router = useRouter();
   const [monthlyBudget, setMonthlyBudget] = useState(String(initialBudget));
+  const [cashBalance, setCashBalance] = useState(String(initialCash));
+  const [onlineBalance, setOnlineBalance] = useState(String(initialOnline));
   const [categoryLimits, setCategoryLimits] = useState<Record<string, string>>(() => {
     const limits: Record<string, string> = {};
     for (const cb of initialCategoryBudgets) {
@@ -29,6 +33,7 @@ export default function SettingsForm({ initialBudget, initialCategoryBudgets, ca
   const [notifyBudget, setNotifyBudget] = useState(true);
   const [notifyCategory, setNotifyCategory] = useState(true);
   const [savingBudget, setSavingBudget] = useState(false);
+  const [savingBalances, setSavingBalances] = useState(false);
   const [savingCategory, setSavingCategory] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const [newCatIcon, setNewCatIcon] = useState("");
@@ -62,8 +67,34 @@ export default function SettingsForm({ initialBudget, initialCategoryBudgets, ca
       body: JSON.stringify({ monthlyBudget: budget }),
     });
     setSavingBudget(false);
-    if (res.ok) toast.success("Budget saved");
-    else toast.error("Failed to save budget");
+    if (res.ok) {
+      toast.success("Budget saved");
+      router.refresh();
+    } else {
+      toast.error("Failed to save budget");
+    }
+  };
+
+  const saveBalances = async () => {
+    const cash = parseFloat(cashBalance);
+    const online = parseFloat(onlineBalance);
+    if (isNaN(cash) || isNaN(online)) {
+      toast.error("Enter valid numeric amounts for balances");
+      return;
+    }
+    setSavingBalances(true);
+    const res = await fetch("/api/balances", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ initialCashBalance: cash, initialOnlineBalance: online }),
+    });
+    setSavingBalances(false);
+    if (res.ok) {
+      toast.success("Balances saved");
+      router.refresh();
+    } else {
+      toast.error("Failed to save balances");
+    }
   };
 
   const saveCategoryLimits = async () => {
@@ -81,6 +112,7 @@ export default function SettingsForm({ initialBudget, initialCategoryBudgets, ca
     await Promise.all(saves);
     setSavingCategory(false);
     toast.success("Category limits saved");
+    router.refresh();
   };
 
   const addCategory = async () => {
@@ -157,6 +189,36 @@ export default function SettingsForm({ initialBudget, initialCategoryBudgets, ca
           </div>
           <button onClick={saveBudget} disabled={savingBudget} className={`${btnClass} w-full sm:w-auto`}>
             {savingBudget ? "Saving" : "Save"}
+          </button>
+        </div>
+      </div>
+
+      {/* Account Balances */}
+      <div className={sectionClass}>
+        <h2 className="font-bold text-text-primary text-lg tracking-tighter mb-6">Account Balances</h2>
+        <div className="flex flex-col sm:flex-row items-center gap-6">
+          <div className="relative w-full sm:flex-1 sm:max-w-xs focus-within:text-primary transition-colors">
+            <span className="absolute left-0 bottom-3 text-text-muted pointer-events-none text-xs font-bold uppercase tracking-widest">Cash</span>
+            <input
+              type="number"
+              value={cashBalance}
+              onChange={(e) => setCashBalance(e.target.value)}
+              className={`${inputClass} pl-16 w-full font-bold`}
+              placeholder="0.00"
+            />
+          </div>
+          <div className="relative w-full sm:flex-1 sm:max-w-xs focus-within:text-primary transition-colors">
+            <span className="absolute left-0 bottom-3 text-text-muted pointer-events-none text-xs font-bold uppercase tracking-widest">Online</span>
+            <input
+              type="number"
+              value={onlineBalance}
+              onChange={(e) => setOnlineBalance(e.target.value)}
+              className={`${inputClass} pl-20 w-full font-bold`}
+              placeholder="0.00"
+            />
+          </div>
+          <button onClick={saveBalances} disabled={savingBalances} className={`${btnClass} w-full sm:w-auto h-full self-end`}>
+            {savingBalances ? "Saving" : "Save"}
           </button>
         </div>
       </div>

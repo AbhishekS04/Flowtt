@@ -5,6 +5,8 @@ export const users = pgTable("users", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   clerkUserId: text("clerk_user_id").unique().notNull(),
   monthlyBudget: numeric("monthly_budget", { precision: 10, scale: 2 }).default("0"),
+  initialCashBalance: numeric("initial_cash_balance", { precision: 10, scale: 2 }).default("0"),
+  initialOnlineBalance: numeric("initial_online_balance", { precision: 10, scale: 2 }).default("0"),
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 
@@ -27,6 +29,20 @@ export const expenses = pgTable("expenses", {
   category: text("category").notNull(),
   date: date("date").notNull(),
   note: text("note"),
+  paymentMethod: text("payment_method").default("online").notNull(),
+  createdAt: timestamp("created_at").default(sql`now()`),
+});
+
+export const incomes = pgTable("incomes", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
+  source: text("source").notNull(),
+  date: date("date").notNull(),
+  note: text("note"),
+  paymentMethod: text("payment_method").default("online").notNull(),
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 
@@ -43,5 +59,7 @@ export const categoryBudgets = pgTable("category_budgets", {
 export type User = typeof users.$inferSelect;
 export type UserCategory = typeof userCategories.$inferSelect;
 export type Expense = typeof expenses.$inferSelect;
+export type Income = typeof incomes.$inferSelect;
 export type CategoryBudget = typeof categoryBudgets.$inferSelect;
 export type NewExpense = typeof expenses.$inferInsert;
+export type NewIncome = typeof incomes.$inferInsert;

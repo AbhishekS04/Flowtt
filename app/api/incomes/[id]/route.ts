@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { users, expenses } from "@/lib/schema";
+import { users, incomes } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
 
 async function getUser(clerkUserId: string) {
@@ -17,18 +17,18 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
   const body = await request.json();
-  const { amount, category, date, note, paymentMethod } = body;
+  const { amount, source, date, note, paymentMethod } = body;
 
   const updated = await db
-    .update(expenses)
+    .update(incomes)
     .set({
       ...(amount !== undefined && { amount: String(amount) }),
-      ...(category !== undefined && { category }),
+      ...(source !== undefined && { source }),
       ...(date !== undefined && { date }),
       ...(note !== undefined && { note }),
       ...(paymentMethod !== undefined && { paymentMethod }),
     })
-    .where(and(eq(expenses.id, params.id), eq(expenses.userId, user.id)))
+    .where(and(eq(incomes.id, params.id), eq(incomes.userId, user.id)))
     .returning();
 
   if (!updated.length) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -42,6 +42,6 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
   const user = await getUser(userId);
   if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
-  await db.delete(expenses).where(and(eq(expenses.id, params.id), eq(expenses.userId, user.id)));
+  await db.delete(incomes).where(and(eq(incomes.id, params.id), eq(incomes.userId, user.id)));
   return NextResponse.json({ success: true });
 }

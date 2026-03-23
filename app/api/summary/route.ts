@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { users, expenses } from "@/lib/schema";
+import { users, expenses, incomes } from "@/lib/schema";
 import { eq, and, gte, lte } from "drizzle-orm";
 import { getMonthString } from "@/lib/utils";
 
@@ -29,7 +29,14 @@ export async function GET(request: Request) {
     .from(expenses)
     .where(and(eq(expenses.userId, user.id), gte(expenses.date, startDate), lte(expenses.date, endDate)));
 
+  const monthIncomes = await db
+    .select()
+    .from(incomes)
+    .where(and(eq(incomes.userId, user.id), gte(incomes.date, startDate), lte(incomes.date, endDate)));
+
   const totalSpent = monthExpenses.reduce((sum, e) => sum + parseFloat(e.amount), 0);
+  const totalIncome = monthIncomes.reduce((sum, i) => sum + parseFloat(i.amount), 0);
+  const totalSaved = totalIncome - totalSpent;
 
   const categoryBreakdown: Record<string, number> = {};
   const dailyTotals: Record<string, number> = {};
@@ -43,6 +50,8 @@ export async function GET(request: Request) {
     month,
     totalBudget: parseFloat(user.monthlyBudget ?? "0"),
     totalSpent,
+    totalIncome,
+    totalSaved,
     categoryBreakdown,
     dailyTotals,
   });

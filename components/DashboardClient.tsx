@@ -18,6 +18,10 @@ interface DashboardClientProps {
   month: string;
   totalBudget: number;
   totalSpent: number;
+  totalIncome: number;
+  totalSaved: number;
+  cashBalance: number;
+  onlineBalance: number;
   categoryBreakdown: Record<string, number>;
   dailyTotals: Record<string, number>;
   categoryLimits: Record<string, number>;
@@ -32,6 +36,10 @@ export default function DashboardClient({
   month,
   totalBudget,
   totalSpent,
+  totalIncome,
+  totalSaved,
+  cashBalance,
+  onlineBalance,
   categoryBreakdown,
   dailyTotals,
   categoryLimits,
@@ -71,6 +79,48 @@ export default function DashboardClient({
       <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 pt-8 pb-32 animate-fade-in relative">
         {activeTab === "overview" && (
           <div className="space-y-8 animate-fade-in">
+            {/* Account Balances (Replaced white banner) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-card border border-border p-6 rounded-3xl shadow-sm relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+                  <span className="text-6xl">💵</span>
+                </div>
+                <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-1">Cash Balance</p>
+                <p className="text-4xl font-black tracking-tighter text-text-primary mb-2">₹{cashBalance.toFixed(2)}</p>
+                <p className="text-xs text-text-muted font-bold tracking-widest uppercase">
+                  Spent this month: <span className="text-text-primary">₹{allExpenses.filter(e => e.paymentMethod === 'cash').reduce((sum, e) => sum + parseFloat(e.amount), 0).toFixed(2)}</span>
+                </p>
+              </div>
+              <div className="bg-card border border-border p-6 rounded-3xl shadow-sm relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+                  <span className="text-6xl">💳</span>
+                </div>
+                <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-1">Online Balance</p>
+                <p className="text-4xl font-black tracking-tighter text-text-primary mb-2">₹{onlineBalance.toFixed(2)}</p>
+                <p className="text-xs text-text-muted font-bold tracking-widest uppercase">
+                  Spent this month: <span className="text-text-primary">₹{allExpenses.filter(e => e.paymentMethod === 'online').reduce((sum, e) => sum + parseFloat(e.amount), 0).toFixed(2)}</span>
+                </p>
+              </div>
+            </div>
+
+            {/* Monthly Summary */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-card border border-border p-6 rounded-3xl shadow-sm">
+                <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-1">Earned this month</p>
+                <p className="text-3xl font-black tracking-tighter text-text-primary">₹{totalIncome.toFixed(2)}</p>
+              </div>
+              <div className="bg-card border border-border p-6 rounded-3xl shadow-sm">
+                <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-1">Spent this month</p>
+                <p className="text-3xl font-black tracking-tighter text-text-primary">₹{totalSpent.toFixed(2)}</p>
+              </div>
+              <div className="bg-card border border-border p-6 rounded-3xl shadow-sm">
+                <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-1">Saved this month</p>
+                <p className={`text-3xl font-black tracking-tighter ${totalSaved >= 0 ? "text-green-500" : "text-red-500"}`}>
+                  ₹{Math.abs(totalSaved).toFixed(2)}
+                </p>
+              </div>
+            </div>
+
             <BudgetCard totalBudget={totalBudget} totalSpent={totalSpent} />
             <NotificationBanner data={{ totalBudget: totalBudget, totalSpent: totalSpent, categorySpending: categoryBreakdown, categoryLimits: categoryLimits }} />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -97,6 +147,8 @@ export default function DashboardClient({
             <h2 className="text-2xl font-bold tracking-tighter mb-8">Preferences</h2>
             <SettingsForm 
               initialBudget={totalBudget}
+              initialCash={parseFloat(user.initialCashBalance || "0")}
+              initialOnline={parseFloat(user.initialOnlineBalance || "0")}
               initialCategoryBudgets={catBudgets.map((cb: any) => ({ category: cb.category, limitAmount: cb.limitAmount }))}
               categories={categories}
             />

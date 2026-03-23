@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { users, expenses, categoryBudgets, userCategories } from "@/lib/schema";
+import { users, expenses, categoryBudgets, userCategories, incomes } from "@/lib/schema";
 import { eq, and, gte, lte } from "drizzle-orm";
 import { getMonthString } from "@/lib/utils";
 import DashboardClient from "@/components/DashboardClient";
@@ -64,7 +64,7 @@ export default async function DashboardPage() {
   const startDate = `${year}-${mon}-01`;
   const endDate = `${year}-${mon}-${new Date(Number(year), Number(mon), 0).getDate()}`;
 
-  const [monthExpenses, catBudgets, customCats] = await Promise.all([
+  const [monthExpenses, catBudgets, customCats, monthIncomes, allExpenses, allIncomes] = await Promise.all([
     db.select().from(expenses).where(
       and(eq(expenses.userId, user.id), gte(expenses.date, startDate), lte(expenses.date, endDate))
     ),
@@ -72,9 +72,16 @@ export default async function DashboardPage() {
       and(eq(categoryBudgets.userId, user.id), eq(categoryBudgets.month, month))
     ),
     db.select().from(userCategories).where(eq(userCategories.userId, user.id)),
+    db.select().from(incomes).where(
+      and(eq(incomes.userId, user.id), gte(incomes.date, startDate), lte(incomes.date, endDate))
+    ),
+    db.select().from(expenses).where(eq(expenses.userId, user.id)),
+    db.select().from(incomes).where(eq(incomes.userId, user.id)),
   ]);
 
   const totalSpent = monthExpenses.reduce((sum, e) => sum + parseFloat(e.amount), 0);
+  const totalIncome = monthIncomes.reduce((sum, i) => sum + parseFloat(i.amount), 0);
+  const totalSaved = totalIncome - totalSpent;
   const totalBudget = parseFloat(user.monthlyBudget ?? "0");
 
   const categoryBreakdown: Record<string, number> = {};
@@ -91,7 +98,20 @@ export default async function DashboardPage() {
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 5);
 
-  const allExpenses = [...monthExpenses].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const monthExpensesSorted = [...monthExpenses].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  let cashExpenses = 0, onlineExpenses = 0;
+  for (const e of allExpenses) {
+    if (e.paymentMethod === 'cash') cashExpenses += parseFloat(e.amount);
+    else onlineExpenses += parseFloat(e.amount);
+  }
+  let cashIncomes = 0, onlineIncomes = 0;
+  for (const i of allIncomes) {
+    if (i.paymentMethod === 'cash') cashIncomes += parseFloat(i.amount);
+    else onlineIncomes += parseFloat(i.amount);
+  }
+  const cashBalance = parseFloat(user.initialCashBalance || "0") + cashIncomes - cashExpenses;
+  const onlineBalance = parseFloat(user.initialOnlineBalance || "0") + onlineIncomes - onlineExpenses;
 
   return (
     <DashboardClient 
@@ -99,11 +119,15 @@ export default async function DashboardPage() {
       month={month}
       totalBudget={totalBudget}
       totalSpent={totalSpent}
+      totalIncome={totalIncome}
+      totalSaved={totalSaved}
+      cashBalance={cashBalance}
+      onlineBalance={onlineBalance}
       categoryBreakdown={categoryBreakdown}
       dailyTotals={dailyTotals}
       categoryLimits={categoryLimits}
       recentExpenses={recentExpenses}
-      allExpenses={allExpenses}
+      allExpenses={monthExpensesSorted}
       catBudgets={catBudgets}
       categories={customCats}
     />
