@@ -1,0 +1,66 @@
+import { auth } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { users, expenses } from "@/lib/schema";
+import { eq, and, gte, lte, sql } from "drizzle-orm";
+import { getMonthString } from "@/lib/utils";
+
+async function getOrCreateUser(clerkUserId: string) {
+  const existing = await db.select().from(users).where(eq(users.clerkUserId, clerkUserId)).limit(1);
+  if (existing.length > 0) return existing[0];
+  const created = await db.insert(users).values({ clerkUserId }).returning();
+  return created[0];
+}
+
+export async function GET(request: Request) {
+  const { userId } = await auth();
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const user = await getOrCreateUser(userId);
+  const { searchParams } = new URL(request.url);
+  const month = searchParams.get("month") ?? getMonthString();
+  const category = searchParams.get("category");
+
+  const [year, mon] = month.split("-");
+  const startDate = `${year}-${mon}-01`;
+  const endDate = `${year}-${mon}-${new Date(Number(year), Number(mon), 0).getDate()}`;
+
+  let query = db
+    .select()
+    .from(expenses)
+    .where(
+      and(
+        eq(expenses.userId, user.id),
+        gte(expenses.date, startDate),
+        lte(expenses.date, endDate),
+        category ? eq(expenses.category, category) : undefined
+      )
+    )
+    .orderBy(sql`${expenses.date} DESC, ${expenses.createdAt} DESC`);
+
+  const data = await query;
+  return NextResponse.json(data);
+}
+
+export async function POST(request: Request) {
+  const { userId } = await auth();
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const user = await getOrCreateUser(userId);
+  const body = await request.json();
+  const { amount, category, date, note } = body;
+
+  if (!amount || amount <= 0) return NextResponse.json({ error: "Amount must be > 0" }, { status: 400 });
+  if (!category) return NextResponse.json({ error: "Category is required" }, { status: 400 });
+  if (!date) return NextResponse.json({ error: "Date is required" }, { status: 400 });
+
+  const created = await db.insert(expenses).values({
+    userId: user.id,
+    amount: String(amount),
+    category,
+    date,
+    note: note ?? null,
+  }).returning();
+
+  return NextResponse.json(created[0], { status: 201 });
+}
