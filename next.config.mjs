@@ -23,31 +23,31 @@ const withPWA = withPWAInit({
     navigateFallback: null,
     runtimeCaching: [
       {
-        urlPattern: /^\/api\/.*$/,
+        urlPattern: /\/api\/.*/i,
         handler: 'NetworkOnly',
       },
       {
-        urlPattern: /^\/sign-in\/?.*$/,
+        urlPattern: /\/sign-in\/?.*/i,
         handler: 'NetworkOnly',
       },
       {
-        urlPattern: /^\/sign-up\/?.*$/,
+        urlPattern: /\/sign-up\/?.*/i,
         handler: 'NetworkOnly',
       },
       {
-        urlPattern: /^\/dashboard\/?.*$/,
+        urlPattern: /\/dashboard\/?.*/i,
         handler: 'NetworkOnly',
       },
       {
-        urlPattern: /^\/settings\/?.*$/,
+        urlPattern: /\/settings\/?.*/i,
         handler: 'NetworkOnly',
       },
       {
-        urlPattern: /^\/add\/?.*$/,
+        urlPattern: /\/add\/?.*/i,
         handler: 'NetworkOnly',
       },
       {
-        urlPattern: /^\/expenses\/?.*$/,
+        urlPattern: /\/expenses\/?.*/i,
         handler: 'NetworkOnly',
       },
       {
