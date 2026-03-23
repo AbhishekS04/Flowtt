@@ -124,33 +124,28 @@ export default function DashboardClient({
             </div>
 
             {/* Upcoming SIP Card */}
-            {nextSip && (
-              <div className="bg-text-primary text-bg border border-border p-6 rounded-3xl shadow-2xl relative overflow-hidden group">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-bg text-text-primary flex items-center justify-center text-2xl shadow-inner overflow-hidden">
-                      <motion.div
-                        animate={{ rotate: [-12, 12] }}
-                        transition={{ 
-                          repeat: Infinity, 
-                          repeatType: "reverse", 
-                          duration: 1, 
-                          ease: "backOut" // Gives it that snappy "tick" feeling
-                        }}
-                        style={{ originX: 0.5, originY: 0.8 }} // Anchor at bottom like a pendulum
-                      >
-                        ⏰
-                      </motion.div>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold text-bg/70 uppercase tracking-[0.2em] mb-1">Upcoming Sync</p>
-                      <p className="text-xl font-bold tracking-tighter">{nextSip.name}</p>
-                    </div>
+            {sips.length > 0 && (
+              <div 
+                className="bg-card border border-border p-6 rounded-3xl shadow-sm flex items-center justify-between cursor-pointer hover:bg-text-primary/5 transition-all"
+                onClick={() => setActiveTab("sips")}
+              >
+                <div>
+                  <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-1">Active Investments</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-2xl font-black tracking-tighter text-text-primary">
+                      {sips.length} {sips.length === 1 ? "SIP" : "SIPs"}
+                    </p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-black tracking-tighter">₹{parseFloat(nextSip.amount as any).toFixed(2)}</p>
-                    <p className="text-[10px] uppercase font-bold tracking-widest text-bg/70 mt-1">Due {nextSip.deductionDate}{getOrdinal(nextSip.deductionDate)}</p>
-                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-black tracking-tighter text-text-primary">
+                    ₹{sips.reduce((sum, s) => sum + parseFloat(s.amount as any), 0).toFixed(2)}
+                  </p>
+                  {nextSip && (
+                    <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mt-1">
+                      Next Due: {nextSip.deductionDate}{getOrdinal(nextSip.deductionDate)}
+                    </p>
+                  )}
                 </div>
               </div>
             )}
