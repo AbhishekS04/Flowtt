@@ -12,9 +12,32 @@ const withPWA = withPWAInit({
     exclude: [
       /middleware-manifest\.json$/,
       /_next\/server\/middleware\.js$/,
-      /_next\/data\/.*\.json$/,
+      /^.*\/sign-in.*$/,
+      /^.*\/sign-up.*$/,
     ],
     navigateFallback: null,
+    runtimeCaching: [
+      {
+        urlPattern: /\/_next\/static\//,
+        handler: 'CacheFirst',
+        options: {
+          cacheName: 'static-assets',
+          expiration: { maxEntries: 200, maxAgeSeconds: 30 * 24 * 60 * 60 },
+        },
+      },
+      {
+        urlPattern: /\.(?:png|jpg|jpeg|svg|webp|gif|ico)$/,
+        handler: 'CacheFirst',
+        options: {
+          cacheName: 'image-assets',
+          expiration: { maxEntries: 100, maxAgeSeconds: 30 * 24 * 60 * 60 },
+        },
+      },
+      {
+        urlPattern: /.*/,
+        handler: 'NetworkOnly',
+      }
+    ]
   }
 });
 
