@@ -101,7 +101,14 @@ export default async function DashboardPage() {
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 5);
 
-  const monthExpensesSorted = [...monthExpenses].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const allTransactions = [
+    ...monthExpenses.map(e => ({ ...e, type: 'expense' })),
+    ...monthIncomes.map(i => ({ 
+      ...i,
+      category: i.source, 
+      type: 'income'
+    }))
+  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   let cashExpenses = 0, onlineExpenses = 0;
   for (const e of allExpenses) {
@@ -129,8 +136,8 @@ export default async function DashboardPage() {
       categoryBreakdown={categoryBreakdown}
       dailyTotals={dailyTotals}
       categoryLimits={categoryLimits}
-      recentExpenses={recentExpenses}
-      allExpenses={monthExpensesSorted}
+      recentExpenses={allTransactions.slice(0, 5)}
+      allExpenses={allTransactions}
       catBudgets={catBudgets}
       categories={customCats}
       sips={userSips}

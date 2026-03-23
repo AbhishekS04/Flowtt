@@ -7,14 +7,14 @@ import { formatCurrency, getCategoryIcon } from "@/lib/utils";
 import { getMonthString } from "@/lib/utils";
 
 interface ExpenseTableProps {
-  initialExpenses: Expense[];
+  initialExpenses: any[];
   categories: { id: string; name: string; icon: string }[];
 }
 
 const ITEMS_PER_PAGE = 10;
 
 export default function ExpenseTable({ initialExpenses, categories }: ExpenseTableProps) {
-  const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
+  const [expenses, setExpenses] = useState<any[]>(initialExpenses);
   
   const getIcon = (catName: string) => {
     const custom = categories.find((c) => c.name.toLowerCase() === catName.toLowerCase());
@@ -27,7 +27,7 @@ export default function ExpenseTable({ initialExpenses, categories }: ExpenseTab
   const [isEditCatOpen, setIsEditCatOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editData, setEditData] = useState({ amount: "", category: "", date: "", note: "" });
+  const [editData, setEditData] = useState({ amount: "", category: "", date: "", note: "", type: "expense" });
   const [loading, setLoading] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -35,7 +35,7 @@ export default function ExpenseTable({ initialExpenses, categories }: ExpenseTab
     setLoading(true);
     const params = new URLSearchParams({ month });
     if (category) params.set("category", category);
-    const res = await fetch(`/api/expenses?${params}`);
+    const res = await fetch(`/api/transactions?${params}`);
     const data = await res.json();
     setExpenses(data);
     setCurrentPage(1);
@@ -52,26 +52,35 @@ export default function ExpenseTable({ initialExpenses, categories }: ExpenseTab
     fetchExpenses(selectedMonth, category);
   };
 
-  const startEdit = (expense: Expense) => {
+  const startEdit = (expense: any) => {
     setEditingId(expense.id);
     setEditData({
       amount: expense.amount,
       category: expense.category,
       date: expense.date,
       note: expense.note ?? "",
+      type: expense.type,
     });
   };
 
   const saveEdit = async (id: string) => {
-    const res = await fetch(`/api/expenses/${id}`, {
+    const isIncome = editData.type === "income";
+    const endpoint = isIncome ? `/api/incomes/${id}` : `/api/expenses/${id}`;
+    const payload = isIncome ? {
+      amount: parseFloat(editData.amount),
+      source: editData.category,
+      date: editData.date,
+      note: editData.note,
+    } : {
+      amount: parseFloat(editData.amount),
+      category: editData.category,
+      date: editData.date,
+      note: editData.note,
+    };
+    const res = await fetch(endpoint, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        amount: parseFloat(editData.amount),
-        category: editData.category,
-        date: editData.date,
-        note: editData.note,
-      }),
+      body: JSON.stringify(payload),
     });
     if (res.ok) {
       toast.success("Updated");
@@ -83,7 +92,10 @@ export default function ExpenseTable({ initialExpenses, categories }: ExpenseTab
   };
 
   const confirmDelete = async (id: string) => {
-    const res = await fetch(`/api/expenses/${id}`, { method: "DELETE" });
+    const item = expenses.find((e: any) => e.id === id);
+    if (!item) return;
+    const endpoint = item.type === "income" ? `/api/incomes/${id}` : `/api/expenses/${id}`;
+    const res = await fetch(endpoint, { method: "DELETE" });
     if (res.ok) {
       toast.success("Deleted");
       setDeleteId(null);
@@ -249,7 +261,9 @@ export default function ExpenseTable({ initialExpenses, categories }: ExpenseTab
                 </tr>
               </thead>
               <tbody>
-                {paginated.map((expense) => (
+                {paginated.map((expense) => {
+                  const isIncome = expense.type === "income";
+                  return (
                   <tr key={expense.id} className="border-b border-border hover:bg-white/[0.02] transition-colors group">
                     {editingId === expense.id ? (
                       <>
@@ -262,7 +276,15 @@ export default function ExpenseTable({ initialExpenses, categories }: ExpenseTab
                           />
                         </td>
                         <td className="py-3 px-2">
-                          <div className="relative">
+                          {editData.type === "income" ? (
+                            <input
+                              type="text"
+                              value={editData.category}
+                              onChange={(e) => setEditData((p) => ({ ...p, category: e.target.value }))}
+                              className="bg-transparent border-b border-border text-text-primary px-0 py-1 text-[10px] w-full focus:outline-none focus:border-primary uppercase tracking-widest font-bold"
+                            />
+                          ) : (
+                            <div className="relative">
                             <button
                               onClick={() => setIsEditCatOpen(!isEditCatOpen)}
                               className="bg-transparent border-b border-border text-text-primary px-0 py-1 text-[10px] focus:outline-none focus:border-primary uppercase tracking-widest font-bold w-full text-left flex items-center justify-between group/drop"
@@ -296,6 +318,7 @@ export default function ExpenseTable({ initialExpenses, categories }: ExpenseTab
                               </>
                             )}
                           </div>
+                          )}
                         </td>
                         <td className="py-3 px-2">
                           <input
@@ -328,8 +351,8 @@ export default function ExpenseTable({ initialExpenses, categories }: ExpenseTab
                           </span>
                         </td>
                         <td className="py-5 px-2 text-text-muted text-sm">{expense.note ?? "—"}</td>
-                        <td className="py-5 px-2 text-right font-bold text-text-primary text-base tracking-tighter">
-                          {formatCurrency(expense.amount)}
+                        <td className={`py-5 px-2 text-right font-bold text-base tracking-tighter ${isIncome ? "text-green-500" : "text-red-500"}`}>
+                          {isIncome ? "+" : "-"}{formatCurrency(expense.amount)}
                         </td>
                         <td className="py-5 px-2 text-right space-x-4 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
@@ -348,14 +371,17 @@ export default function ExpenseTable({ initialExpenses, categories }: ExpenseTab
                       </>
                     )}
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
 
           {/* Mobile List View */}
           <div className="md:hidden space-y-0">
-            {paginated.map((expense, idx) => (
+            {paginated.map((expense, idx) => {
+              const isIncome = expense.type === "income";
+              return (
               <div key={expense.id} className={`py-5 flex flex-col gap-4 group ${idx !== paginated.length - 1 ? 'border-b border-border' : ''}`}>
                 {editingId === expense.id ? (
                   <div className="space-y-4 w-full">
@@ -373,7 +399,15 @@ export default function ExpenseTable({ initialExpenses, categories }: ExpenseTab
                         className="w-1/3 bg-transparent border-b border-border text-text-primary px-0 py-2 text-sm text-right focus:outline-none focus:border-primary font-bold"
                       />
                     </div>
-                    <div className="relative">
+                    {editData.type === "income" ? (
+                      <input
+                        type="text"
+                        value={editData.category}
+                        onChange={(e) => setEditData((p) => ({ ...p, category: e.target.value }))}
+                        className="w-full bg-transparent border-b border-border text-text-primary px-0 py-2 text-[10px] focus:outline-none focus:border-primary uppercase tracking-widest font-bold"
+                      />
+                    ) : (
+                      <div className="relative">
                       <button
                         onClick={() => setIsEditCatOpen(!isEditCatOpen)}
                         className="w-full bg-transparent border-b border-border text-text-primary px-0 py-2 text-[10px] focus:outline-none focus:border-primary uppercase tracking-widest font-bold text-left flex items-center justify-between group/drop"
@@ -407,6 +441,7 @@ export default function ExpenseTable({ initialExpenses, categories }: ExpenseTab
                         </>
                       )}
                     </div>
+                    )}
                     <input
                       type="text"
                       value={editData.note}
@@ -433,8 +468,8 @@ export default function ExpenseTable({ initialExpenses, categories }: ExpenseTab
                           <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted">{expense.date}</p>
                         </div>
                       </div>
-                      <span className="font-bold text-text-primary text-lg tracking-tighter">
-                        {formatCurrency(expense.amount)}
+                      <span className={`font-bold text-lg tracking-tighter ${isIncome ? "text-green-500" : "text-red-500"}`}>
+                        {isIncome ? "+" : "-"}{formatCurrency(expense.amount)}
                       </span>
                     </div>
                     {expense.note && (
@@ -453,7 +488,8 @@ export default function ExpenseTable({ initialExpenses, categories }: ExpenseTab
                   </>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Pagination */}

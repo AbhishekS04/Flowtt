@@ -2,7 +2,7 @@ import { Expense } from "@/lib/schema";
 import { formatCurrency, getCategoryIcon } from "@/lib/utils";
 
 interface RecentExpensesProps {
-  expenses: Expense[];
+  expenses: any[];
   categories: { id: string; name: string; icon: string }[];
 }
 
@@ -14,7 +14,7 @@ export default function RecentExpenses({ expenses, categories }: RecentExpensesP
   return (
     <div className="bg-card border border-border p-6 md:p-8 shadow-none transition-colors">
       <div className="flex items-center justify-between mb-8">
-        <h2 className="text-[10px] font-bold text-text-muted tracking-widest uppercase">Recent Expenses</h2>
+        <h2 className="text-[10px] font-bold text-text-muted tracking-widest uppercase">Recent Transactions</h2>
       </div>
 
       {expenses.length === 0 ? (
@@ -23,7 +23,9 @@ export default function RecentExpenses({ expenses, categories }: RecentExpensesP
         </div>
       ) : (
         <div className="space-y-0">
-          {expenses.slice(0, 5).map((expense, idx) => (
+          {expenses.slice(0, 5).map((expense, idx) => {
+            const isIncome = expense.type === "income";
+            return (
             <div
               key={expense.id}
               className={`flex items-center justify-between py-4 group/item cursor-default ${
@@ -41,11 +43,12 @@ export default function RecentExpenses({ expenses, categories }: RecentExpensesP
                   <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted">{expense.date}</p>
                 </div>
               </div>
-              <p className="text-base font-bold text-text-primary tracking-tighter">
-                {formatCurrency(expense.amount)}
+              <p className={`text-base font-bold tracking-tighter ${isIncome ? "text-green-500" : "text-red-500"}`}>
+                {isIncome ? "+" : "-"}{formatCurrency(expense.amount)}
               </p>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

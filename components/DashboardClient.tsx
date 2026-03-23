@@ -27,8 +27,8 @@ interface DashboardClientProps {
   categoryBreakdown: Record<string, number>;
   dailyTotals: Record<string, number>;
   categoryLimits: Record<string, number>;
-  recentExpenses: Expense[];
-  allExpenses: Expense[];
+  recentExpenses: any[];
+  allExpenses: any[];
   catBudgets: any[];
   categories: { id: string; name: string; icon: string }[];
   sips: RecurringExpense[];
@@ -127,8 +127,19 @@ export default function DashboardClient({
               <div className="bg-text-primary text-bg border border-border p-6 rounded-3xl shadow-2xl relative overflow-hidden group">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-bg text-text-primary flex items-center justify-center text-2xl shadow-inner animate-pulse">
-                      ⏰
+                    <div className="w-12 h-12 rounded-full bg-bg text-text-primary flex items-center justify-center text-2xl shadow-inner overflow-hidden">
+                      <motion.div
+                        animate={{ rotate: [-12, 12] }}
+                        transition={{ 
+                          repeat: Infinity, 
+                          repeatType: "reverse", 
+                          duration: 1, 
+                          ease: "backOut" // Gives it that snappy "tick" feeling
+                        }}
+                        style={{ originX: 0.5, originY: 0.8 }} // Anchor at bottom like a pendulum
+                      >
+                        ⏰
+                      </motion.div>
                     </div>
                     <div>
                       <p className="text-[10px] font-bold text-bg/70 uppercase tracking-[0.2em] mb-1">Upcoming Sync</p>
@@ -147,16 +158,18 @@ export default function DashboardClient({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-card border border-border p-6 rounded-3xl shadow-sm">
                 <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-1">Earned this month</p>
-                <p className="text-3xl font-black tracking-tighter text-text-primary">₹{totalIncome.toFixed(2)}</p>
+                <p className="text-3xl font-black tracking-tighter text-green-500">+₹{totalIncome.toFixed(2)}</p>
               </div>
               <div className="bg-card border border-border p-6 rounded-3xl shadow-sm">
                 <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-1">Spent this month</p>
-                <p className="text-3xl font-black tracking-tighter text-text-primary">₹{totalSpent.toFixed(2)}</p>
+                <p className="text-3xl font-black tracking-tighter text-red-500">-₹{totalSpent.toFixed(2)}</p>
               </div>
               <div className="bg-card border border-border p-6 rounded-3xl shadow-sm">
-                <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-1">Saved this month</p>
+                <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-1">
+                  {totalSaved >= 0 ? "Saved this month" : "Overspent this month"}
+                </p>
                 <p className={`text-3xl font-black tracking-tighter ${totalSaved >= 0 ? "text-green-500" : "text-red-500"}`}>
-                  ₹{Math.abs(totalSaved).toFixed(2)}
+                  {totalSaved >= 0 ? "+" : "-"}₹{Math.abs(totalSaved).toFixed(2)}
                 </p>
               </div>
             </div>
