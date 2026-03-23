@@ -17,7 +17,8 @@ export const metadata: Metadata = {
     title: "Trackr",
   },
   icons: {
-    apple: "/icon.png",
+    icon: "/favicon.ico",
+    apple: "/apple-icon.png",
   },
 };
 
