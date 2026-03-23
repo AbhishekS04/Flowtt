@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { users, expenses } from "@/lib/schema";
+import { users, expenses, userCategories } from "@/lib/schema";
 import { eq, and, gte, lte } from "drizzle-orm";
 import { getMonthString } from "@/lib/utils";
 import Navbar from "@/components/Navbar";
@@ -25,6 +25,11 @@ export default async function ExpensesPage() {
     .from(expenses)
     .where(and(eq(expenses.userId, user.id), gte(expenses.date, startDate), lte(expenses.date, endDate)));
 
+  const categories = await db
+    .select({ id: userCategories.id, name: userCategories.name, icon: userCategories.icon })
+    .from(userCategories)
+    .where(eq(userCategories.userId, user.id));
+
   return (
     <div className="min-h-screen bg-[#0f0f0f]">
       <Navbar />
@@ -34,7 +39,7 @@ export default async function ExpensesPage() {
           <p className="text-sm text-[#a3a3a3] mt-1">Manage your spending history.</p>
         </div>
         <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-5">
-          <ExpenseTable initialExpenses={initialExpenses} />
+          <ExpenseTable initialExpenses={initialExpenses} categories={categories} />
         </div>
       </main>
     </div>

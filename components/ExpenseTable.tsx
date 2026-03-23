@@ -22,6 +22,9 @@ export default function ExpenseTable({ initialExpenses, categories }: ExpenseTab
   };
   const [selectedMonth, setSelectedMonth] = useState(getMonthString());
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [isMonthOpen, setIsMonthOpen] = useState(false);
+  const [isCatOpen, setIsCatOpen] = useState(false);
+  const [isEditCatOpen, setIsEditCatOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editData, setEditData] = useState({ amount: "", category: "", date: "", note: "" });
@@ -129,26 +132,89 @@ export default function ExpenseTable({ initialExpenses, categories }: ExpenseTab
     <div className="space-y-8">
       {/* Filters */}
       <div className="flex flex-col md:flex-row gap-6 justify-between items-start md:items-center">
-        <div className="flex flex-col md:flex-row gap-6 w-full md:w-auto">
-          <select
-            value={selectedMonth}
-            onChange={(e) => handleMonthChange(e.target.value)}
-            className={selectClass}
-          >
-            {months.map((m) => (
-              <option key={m} value={m} className="bg-bg">{m}</option>
-            ))}
-          </select>
-          <select
-            value={selectedCategory}
-            onChange={(e) => handleCategoryChange(e.target.value)}
-            className={selectClass}
-          >
-            <option value="" className="bg-bg">ALL CATEGORIES</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.name} className="bg-bg">{c.name.toUpperCase()}</option>
-            ))}
-          </select>
+        <div className="flex flex-col md:flex-row gap-6 w-full md:w-auto z-50">
+          {/* Month Filter */}
+          <div className="relative min-w-[140px]">
+            <button
+              onClick={() => setIsMonthOpen(!isMonthOpen)}
+              className={`${selectClass} flex items-center justify-between group/drop`}
+            >
+              <span>{selectedMonth}</span>
+              <svg className={`w-3 h-3 transition-transform duration-300 ${isMonthOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            {isMonthOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setIsMonthOpen(false)} />
+                <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-card border border-border shadow-2xl rounded-xl overflow-hidden animate-slide-up-subtle">
+                  <div className="max-h-60 overflow-y-auto py-1 custom-scrollbar">
+                    {months.map((m) => (
+                      <button
+                        key={m}
+                        onClick={() => {
+                          handleMonthChange(m);
+                          setIsMonthOpen(false);
+                        }}
+                        className={`w-full px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest transition-colors ${
+                          selectedMonth === m ? "bg-text-primary text-bg" : "hover:bg-text-primary/5 text-text-primary"
+                        }`}
+                      >
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Category Filter */}
+          <div className="relative min-w-[140px]">
+            <button
+              onClick={() => setIsCatOpen(!isCatOpen)}
+              className={`${selectClass} flex items-center justify-between group/drop`}
+            >
+              <span className="truncate">{selectedCategory || "ALL CATEGORIES"}</span>
+              <svg className={`w-3 h-3 transition-transform duration-300 ${isCatOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            {isCatOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setIsCatOpen(false)} />
+                <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-card border border-border shadow-2xl rounded-xl overflow-hidden animate-slide-up-subtle">
+                  <div className="max-h-60 overflow-y-auto py-1 custom-scrollbar">
+                    <button
+                      onClick={() => {
+                        handleCategoryChange("");
+                        setIsCatOpen(false);
+                      }}
+                      className={`w-full px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest transition-colors ${
+                        selectedCategory === "" ? "bg-text-primary text-bg" : "hover:bg-text-primary/5 text-text-primary"
+                      }`}
+                    >
+                      ALL CATEGORIES
+                    </button>
+                    {categories.map((c) => (
+                      <button
+                        key={c.id}
+                        onClick={() => {
+                          handleCategoryChange(c.name);
+                          setIsCatOpen(false);
+                        }}
+                        className={`w-full px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest transition-colors ${
+                          selectedCategory === c.name ? "bg-text-primary text-bg" : "hover:bg-text-primary/5 text-text-primary"
+                        }`}
+                      >
+                        {c.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         </div>
         <button
           onClick={downloadCSV}
@@ -196,15 +262,40 @@ export default function ExpenseTable({ initialExpenses, categories }: ExpenseTab
                           />
                         </td>
                         <td className="py-3 px-2">
-                          <select
-                            value={editData.category}
-                            onChange={(e) => setEditData((p) => ({ ...p, category: e.target.value }))}
-                            className="bg-transparent border-b border-border text-text-primary px-0 py-1 text-sm focus:outline-none focus:border-primary uppercase tracking-widest font-bold text-[10px]"
-                          >
-                            {categories.map((c) => (
-                              <option key={c.id} value={c.name} className="bg-bg">{c.name.toUpperCase()}</option>
-                            ))}
-                          </select>
+                          <div className="relative">
+                            <button
+                              onClick={() => setIsEditCatOpen(!isEditCatOpen)}
+                              className="bg-transparent border-b border-border text-text-primary px-0 py-1 text-[10px] focus:outline-none focus:border-primary uppercase tracking-widest font-bold w-full text-left flex items-center justify-between group/drop"
+                            >
+                              <span>{editData.category}</span>
+                              <svg className={`w-2.5 h-2.5 transition-transform duration-300 ${isEditCatOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </button>
+                            {isEditCatOpen && (
+                              <>
+                                <div className="fixed inset-0 z-40" onClick={() => setIsEditCatOpen(false)} />
+                                <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-card border border-border shadow-2xl rounded-lg overflow-hidden animate-slide-up-subtle">
+                                  <div className="max-h-40 overflow-y-auto py-1 custom-scrollbar">
+                                    {categories.map((c) => (
+                                      <button
+                                        key={c.id}
+                                        onClick={() => {
+                                          setEditData(p => ({ ...p, category: c.name }));
+                                          setIsEditCatOpen(false);
+                                        }}
+                                        className={`w-full px-3 py-2 text-left text-[10px] font-bold uppercase tracking-widest transition-colors ${
+                                          editData.category === c.name ? "bg-text-primary text-bg" : "hover:bg-text-primary/5 text-text-primary"
+                                        }`}
+                                      >
+                                        {c.name}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              </>
+                            )}
+                          </div>
                         </td>
                         <td className="py-3 px-2">
                           <input
@@ -282,15 +373,40 @@ export default function ExpenseTable({ initialExpenses, categories }: ExpenseTab
                         className="w-1/3 bg-transparent border-b border-border text-text-primary px-0 py-2 text-sm text-right focus:outline-none focus:border-primary font-bold"
                       />
                     </div>
-                    <select
-                      value={editData.category}
-                      onChange={(e) => setEditData((p) => ({ ...p, category: e.target.value }))}
-                      className="w-full bg-transparent border-b border-border text-text-primary px-0 py-2 text-sm focus:outline-none focus:border-primary uppercase tracking-widest font-bold text-[10px]"
-                    >
-                      {categories.map((c) => (
-                        <option key={c.id} value={c.name} className="bg-bg">{c.name.toUpperCase()}</option>
-                      ))}
-                    </select>
+                    <div className="relative">
+                      <button
+                        onClick={() => setIsEditCatOpen(!isEditCatOpen)}
+                        className="w-full bg-transparent border-b border-border text-text-primary px-0 py-2 text-[10px] focus:outline-none focus:border-primary uppercase tracking-widest font-bold text-left flex items-center justify-between group/drop"
+                      >
+                        <span>{editData.category}</span>
+                        <svg className={`w-3 h-3 transition-transform duration-300 ${isEditCatOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                      {isEditCatOpen && (
+                        <>
+                          <div className="fixed inset-0 z-40" onClick={() => setIsEditCatOpen(false)} />
+                          <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-card border border-border shadow-2xl rounded-lg overflow-hidden animate-slide-up-subtle">
+                            <div className="max-h-40 overflow-y-auto py-1 custom-scrollbar">
+                              {categories.map((c) => (
+                                <button
+                                  key={c.id}
+                                  onClick={() => {
+                                    setEditData(p => ({ ...p, category: c.name }));
+                                    setIsEditCatOpen(false);
+                                  }}
+                                  className={`w-full px-4 py-3 text-left text-[10px] font-bold uppercase tracking-widest transition-colors ${
+                                    editData.category === c.name ? "bg-text-primary text-bg" : "hover:bg-text-primary/5 text-text-primary"
+                                  }`}
+                                >
+                                  {c.name}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
                     <input
                       type="text"
                       value={editData.note}

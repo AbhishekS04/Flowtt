@@ -73,16 +73,25 @@ export default function AddExpenseForm({ onSuccess, categories }: AddExpenseForm
   const inputClass =
     "w-full bg-transparent border-b border-border text-text-primary px-0 py-2 text-xl focus:outline-none focus:border-primary transition-colors placeholder:text-text-muted/30 rounded-none appearance-none";
 
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const filteredCategories = categories.filter(c => 
+    c.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const selectedCategory = categories.find((c) => c.name === form.category);
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-10 group/form">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tighter text-text-primary">
+    <form onSubmit={handleSubmit} className="space-y-12 group/form">
+      <div className="flex flex-col gap-2">
+        <h2 className="text-4xl font-bold tracking-tighter text-text-primary leading-none">
           New Expense.
         </h2>
-        <p className="text-text-muted text-sm mt-2">Record a transaction.</p>
+        <p className="text-text-muted text-sm font-medium">Record a transaction in seconds.</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
         {field(
           "Amount (₹)",
           <input
@@ -92,7 +101,7 @@ export default function AddExpenseForm({ onSuccess, categories }: AddExpenseForm
             placeholder="0.00"
             value={form.amount}
             onChange={(e) => setForm((p) => ({ ...p, amount: e.target.value }))}
-            className={inputClass + " font-bold"}
+            className={inputClass + " font-bold text-2xl"}
             autoFocus
           />,
           errors.amount
@@ -100,43 +109,113 @@ export default function AddExpenseForm({ onSuccess, categories }: AddExpenseForm
 
         {field(
           "Category",
-          <select
-            value={form.category}
-            onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))}
-            className={inputClass + " cursor-pointer"}
-          >
-            <option value="" disabled className="text-text-muted/50 hidden">Select</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.name} className="text-text-primary bg-bg text-base">
-                {c.icon} {c.name.charAt(0).toUpperCase() + c.name.slice(1)}
-              </option>
-            ))}
-          </select>,
+          <div className="relative group/select">
+            <button
+              type="button"
+              onClick={() => {
+                setIsOpen(!isOpen);
+                if (!isOpen) setSearch("");
+              }}
+              className={`${inputClass} flex items-center justify-between group-focus-within/select:border-primary transition-all duration-300`}
+            >
+              <div className="flex items-center gap-4">
+                {selectedCategory ? (
+                  <>
+                    <span className="text-2xl transition-transform group-hover:scale-110 duration-300">{selectedCategory.icon}</span>
+                    <span className="font-bold tracking-tight text-text-primary uppercase text-xs tracking-widest">{selectedCategory.name}</span>
+                  </>
+                ) : (
+                  <span className="text-text-muted/40 font-bold uppercase text-[10px] tracking-[0.2em]">Search Category...</span>
+                )}
+              </div>
+              <svg 
+                className={`w-3.5 h-3.5 text-text-muted transition-transform duration-500 ease-out ${isOpen ? "rotate-180 text-primary" : ""}`} 
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {isOpen && (
+              <>
+                <div 
+                  className="fixed inset-0 z-40 bg-transparent" 
+                  onClick={() => setIsOpen(false)}
+                />
+                <div className="absolute top-full left-0 right-0 mt-3 z-50 bg-card border border-border/80 shadow-[0_20px_60px_rgba(0,0,0,0.6)] rounded-3xl overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300 ease-out">
+                  <div className="p-3 border-b border-border/50">
+                    <input
+                      type="text"
+                      placeholder="Search for category..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="w-full bg-text-primary/5 border border-border/40 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:border-text-primary/30 transition-all placeholder:text-text-muted/40 font-medium"
+                      autoFocus
+                    />
+                  </div>
+                  <div className="max-h-64 overflow-y-auto py-2 custom-scrollbar">
+                    {filteredCategories.length > 0 ? (
+                      filteredCategories.map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => {
+                            setForm(p => ({ ...p, category: c.name }));
+                            setIsOpen(false);
+                            setSearch("");
+                          }}
+                          className={`w-full flex items-center gap-4 px-5 py-4 text-left transition-all duration-300 group/option ${
+                            form.category === c.name 
+                              ? "bg-text-primary text-bg" 
+                              : "hover:bg-text-primary/5 text-text-primary"
+                          }`}
+                        >
+                          <span className={`text-2xl transition-transform duration-500 ${form.category === c.name ? "scale-100" : "group-hover/option:scale-125 group-hover/option:rotate-12"}`}>{c.icon}</span>
+                          <span className="font-bold text-[10px] uppercase tracking-[0.2em] leading-none flex-1">{c.name}</span>
+                          {form.category === c.name && (
+                            <div className="w-1.5 h-1.5 rounded-full bg-bg shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
+                          )}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-5 py-8 text-center">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted opacity-50">No results</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>,
           errors.category
         )}
       </div>
 
-      {field(
-        "Date",
-        <input
-          type="date"
-          value={form.date}
-          onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))}
-          className={inputClass + " sm:w-1/2 cursor-pointer w-full"}
-        />,
-        errors.date
-      )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
+        {field(
+          "Date",
+          <input
+            type="date"
+            value={form.date}
+            onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))}
+            className={inputClass + " cursor-pointer uppercase font-bold text-[10px] tracking-widest"}
+          />,
+          errors.date
+        )}
 
-      {field(
-        "Note",
-        <input
-          type="text"
-          placeholder="Optional description"
-          value={form.note}
-          onChange={(e) => setForm((p) => ({ ...p, note: e.target.value }))}
-          className={inputClass}
-        />
-      )}
+        {field(
+          "Note",
+          <input
+            type="text"
+            placeholder="What was this for?"
+            value={form.note}
+            onChange={(e) => setForm((p) => ({ ...p, note: e.target.value }))}
+            className={inputClass + " text-sm font-medium"}
+          />
+        )}
+      </div>
 
       <div className="pt-4">
         <button

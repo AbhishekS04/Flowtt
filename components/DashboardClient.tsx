@@ -48,7 +48,7 @@ export default function DashboardClient({
   const beautifulGradient = "bg-text-primary text-bg shadow-lg shadow-black/10 border-none";
 
   return (
-    <div className="min-h-screen bg-bg text-text-primary flex flex-col pb-[85px] md:pb-0 font-sans selection:bg-purple-500 selection:text-white">
+    <div className="min-h-screen bg-bg text-text-primary flex flex-col md:pb-0 font-sans selection:bg-purple-500 selection:text-white">
       {/* Top Header */}
       <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-xl border-b border-border">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
@@ -68,7 +68,7 @@ export default function DashboardClient({
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-8 animate-fade-in relative">
+      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 pt-8 pb-32 animate-fade-in relative">
         {activeTab === "overview" && (
           <div className="space-y-8 animate-fade-in">
             <BudgetCard totalBudget={totalBudget} totalSpent={totalSpent} />
@@ -119,19 +119,23 @@ export default function DashboardClient({
         ))}
       </div>
 
-      {/* Mobile Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-xl border-t border-border md:hidden shadow-[0_-10px_40px_rgba(0,0,0,0.8)]" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-        <div className="flex items-center justify-around h-[65px] px-2">
-          {([{id: "overview", label: "Home", icon: "🏠"}, {id: "expenses", label: "Expenses", icon: "📋"}, {id: "settings", label: "Settings", icon: "⚙️"}] as const).map((tab) => (
+      {/* Mobile Bottom Navigation (Floating Capsule) */}
+      <nav className="fixed bottom-8 left-6 right-6 z-50 md:hidden">
+        <div className="bg-text-primary/10 backdrop-blur-2xl border border-white/10 rounded-full p-1 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center justify-between">
+          {([{id: "overview", label: "Overview", icon: "🏠"}, {id: "expenses", label: "History", icon: "📋"}, {id: "settings", label: "Settings", icon: "⚙️"}] as const).map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex flex-col items-center justify-center flex-1 h-full gap-1 text-[9px] font-bold uppercase tracking-widest transition-all duration-300 ${
-                activeTab === tab.id ? "text-purple-400" : "text-text-muted"
+              className={`flex items-center justify-center flex-1 py-3 px-2 rounded-full transition-all duration-500 relative group ${
+                activeTab === tab.id ? "bg-text-primary text-bg shadow-xl" : "text-text-muted hover:text-text-primary"
               }`}
             >
-              <span className={`text-xl leading-none transition-transform duration-300 ${activeTab === tab.id ? "scale-110" : ""}`}>{tab.icon}</span>
-              {tab.label}
+              <div className="flex items-center gap-2">
+                <span className={`text-lg transition-transform duration-500 ${activeTab === tab.id ? "scale-110" : "group-hover:scale-110"}`}>{tab.icon}</span>
+                {activeTab === tab.id && (
+                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] animate-in fade-in slide-in-from-left-2 duration-300">{tab.label}</span>
+                )}
+              </div>
             </button>
           ))}
         </div>
