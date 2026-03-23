@@ -14,9 +14,42 @@ const withPWA = withPWAInit({
       /_next\/server\/middleware\.js$/,
       /^.*\/sign-in.*$/,
       /^.*\/sign-up.*$/,
+      /^.*\/api\/.*$/,
+      /^.*\/dashboard.*$/,
+      /^.*\/settings.*$/,
+      /^.*\/add.*$/,
+      /^.*\/expenses.*$/,
     ],
     navigateFallback: null,
     runtimeCaching: [
+      {
+        urlPattern: /^\/api\/.*$/,
+        handler: 'NetworkOnly',
+      },
+      {
+        urlPattern: /^\/sign-in\/?.*$/,
+        handler: 'NetworkOnly',
+      },
+      {
+        urlPattern: /^\/sign-up\/?.*$/,
+        handler: 'NetworkOnly',
+      },
+      {
+        urlPattern: /^\/dashboard\/?.*$/,
+        handler: 'NetworkOnly',
+      },
+      {
+        urlPattern: /^\/settings\/?.*$/,
+        handler: 'NetworkOnly',
+      },
+      {
+        urlPattern: /^\/add\/?.*$/,
+        handler: 'NetworkOnly',
+      },
+      {
+        urlPattern: /^\/expenses\/?.*$/,
+        handler: 'NetworkOnly',
+      },
       {
         urlPattern: /\/_next\/static\//,
         handler: 'CacheFirst',

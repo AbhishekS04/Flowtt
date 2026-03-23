@@ -16,22 +16,22 @@ export default function BudgetCard({ totalBudget, totalSpent }: BudgetCardProps)
   return (
     <div className="bg-card border border-border p-6 sm:p-8 shadow-none relative transition-colors">
       <h2 className="text-[10px] font-bold text-text-muted mb-6 tracking-widest uppercase">Budget Overview</h2>
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6 sm:gap-4 mb-8">
+        <div className="flex-1">
           <p className="text-[10px] text-text-muted mb-1 font-bold uppercase tracking-widest">Total</p>
           <p className="text-xl font-bold text-text-primary tracking-tighter">{formatCurrency(totalBudget)}</p>
         </div>
-        <div>
+        <div className="flex-1">
           <p className="text-[10px] text-text-muted mb-1 font-bold uppercase tracking-widest">Spent</p>
           <p className="text-xl font-bold text-text-primary tracking-tighter">{formatCurrency(totalSpent)}</p>
         </div>
-        <div>
+        <div className="flex-1">
           <p className="text-[10px] text-text-muted mb-1 font-bold uppercase tracking-widest">Remaining</p>
           <p
             className={`text-xl font-bold tracking-tighter ${remaining < 0 ? "text-primary" : "text-text-primary"}`}
           >
             {formatCurrency(Math.abs(remaining))}
-            {remaining < 0 && <span className="text-[10px] uppercase font-bold ml-1 tracking-widest border border-primary px-1">over</span>}
+            {remaining < 0 && <span className="text-[10px] uppercase font-bold ml-2 tracking-widest border border-primary px-1">over</span>}
           </p>
         </div>
       </div>
