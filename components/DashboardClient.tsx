@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { createPortal } from "react-dom";
 import { UserButton } from "@clerk/nextjs";
+import { toast } from "sonner";
 import BudgetCard from "@/components/BudgetCard";
 import NotificationBanner from "@/components/NotificationBanner";
 import DonutChart from "@/components/DonutChart";
@@ -34,6 +36,7 @@ interface DashboardClientProps {
   categories: { id: string; name: string; icon: string }[];
   sips: RecurringExpense[];
   goals: Goal[];
+  recharges: any[];
 }
 
 export default function DashboardClient({
@@ -54,10 +57,13 @@ export default function DashboardClient({
   categories,
   sips,
   goals,
+  recharges,
 }: DashboardClientProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"overview" | "expenses" | "goals" | "sips" | "settings">("overview");
   const [isAddOpen, setIsAddOpen] = useState(false);
+
+  const activeRecharge = recharges?.[0] || null;
 
   const staticPrimaryColor = "bg-text-primary text-bg shadow-lg shadow-black/10 border-none font-bold transition-all active:scale-95";
   const beautifulGradient = "bg-text-primary text-bg shadow-lg shadow-black/10 border-none";
@@ -102,8 +108,8 @@ export default function DashboardClient({
             {/* Account Balances (Replaced white banner) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-card border border-border p-6 rounded-3xl shadow-sm relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <span className="text-6xl">💵</span>
+                <div className="absolute top-0 right-0 p-6 opacity-100 transition-opacity">
+                  <span className="text-6xl drop-shadow-sm">💵</span>
                 </div>
                 <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-1">Cash Balance</p>
                 <p className="text-4xl font-black tracking-tighter text-text-primary mb-2">₹{cashBalance.toFixed(2)}</p>
@@ -112,8 +118,8 @@ export default function DashboardClient({
                 </p>
               </div>
               <div className="bg-card border border-border p-6 rounded-3xl shadow-sm relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <span className="text-6xl">💳</span>
+                <div className="absolute top-0 right-0 p-6 opacity-100 transition-opacity">
+                  <span className="text-6xl drop-shadow-sm">💳</span>
                 </div>
                 <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-1">Online Balance</p>
                 <p className="text-4xl font-black tracking-tighter text-text-primary mb-2">₹{onlineBalance.toFixed(2)}</p>
@@ -148,6 +154,55 @@ export default function DashboardClient({
                   )}
                 </div>
               </div>
+            )}
+
+            {/* Recharge Card */}
+            {activeRecharge ? (() => {
+               const start = new Date(activeRecharge.startDate).getTime();
+               const end = new Date(activeRecharge.endDate).getTime();
+               const today = new Date().getTime();
+               const totalDays = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
+               const remainingDays = Math.max(0, Math.ceil((end - today) / (1000 * 60 * 60 * 24)));
+               const progress = Math.min(100, Math.max(0, ((totalDays - remainingDays) / totalDays) * 100));
+               
+               return (
+                 <div 
+                   className="bg-card border border-border p-6 rounded-3xl shadow-sm relative overflow-hidden group cursor-pointer hover:bg-text-primary/5 transition-all"
+                   onClick={() => setActiveTab("settings")}
+                 >
+                   <div className="absolute top-0 right-0 p-6 opacity-100 transition-opacity">
+                     <span className="text-6xl drop-shadow-sm opacity-20">📱</span>
+                   </div>
+                   <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-1 relative z-10">Active Plan</p>
+                   <div className="mb-4 relative z-10">
+                     <p className="text-3xl font-black tracking-tighter text-text-primary line-clamp-1">
+                       {activeRecharge.name}
+                     </p>
+                     <p className="text-[10px] font-bold text-text-muted mt-1 uppercase tracking-widest">
+                       ₹{parseFloat(activeRecharge.amount).toFixed(2)} • {activeRecharge.validityDays} Days Validity
+                     </p>
+                   </div>
+                   <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-text-muted mb-2 relative z-10">
+                     <span className={remainingDays <= 3 ? "text-red-500" : ""}>{remainingDays} {remainingDays === 1 ? "Day" : "Days"} Left</span>
+                     <span>Ends {activeRecharge.endDate}</span>
+                   </div>
+                   <div className="h-2 w-full bg-border rounded-full overflow-hidden relative z-10">
+                     <div 
+                       className={`h-full rounded-full transition-all duration-1000 ${remainingDays <= 3 ? "bg-red-500" : "bg-text-primary"}`} 
+                       style={{ width: `${progress}%` }} 
+                     />
+                   </div>
+                 </div>
+               );
+            })() : (
+               <div 
+                 className="bg-card border border-dashed border-border p-6 rounded-3xl shadow-sm relative overflow-hidden group cursor-pointer hover:bg-text-primary/5 transition-all flex flex-col items-center justify-center text-center py-10"
+                 onClick={() => setActiveTab("settings")}
+               >
+                 <span className="text-4xl opacity-50 mb-2">📱</span>
+                 <p className="text-sm font-bold text-text-primary">No Active Recharge</p>
+                 <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em]">Tap to track your plan</p>
+               </div>
             )}
 
             {/* Monthly Summary */}
@@ -213,8 +268,9 @@ export default function DashboardClient({
               initialBudget={totalBudget}
               initialCash={parseFloat(user.initialCashBalance || "0")}
               initialOnline={parseFloat(user.initialOnlineBalance || "0")}
-              initialCategoryBudgets={catBudgets.map((cb: any) => ({ category: cb.category, limitAmount: cb.limitAmount }))}
+              initialCategoryBudgets={catBudgets.map(cb => ({ category: cb.category, limitAmount: cb.limitAmount }))}
               categories={categories}
+              initialRecharge={activeRecharge}
             />
           </div>
         )}
@@ -304,6 +360,7 @@ export default function DashboardClient({
           </div>
         </div>
       )}
+      {/* Recharge Modal removed since it now exists in Settings */}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { users, categoryBudgets, userCategories } from "@/lib/schema";
+import { users, categoryBudgets, userCategories, recharges } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
 import { getMonthString } from "@/lib/utils";
 import Navbar from "@/components/Navbar";
@@ -28,6 +28,8 @@ export default async function SettingsPage() {
     .from(userCategories)
     .where(eq(userCategories.userId, user.id));
 
+  const userRecharges = await db.select().from(recharges).where(eq(recharges.userId, user.id));
+
   return (
     <div className="min-h-screen bg-[#0f0f0f]">
       <Navbar />
@@ -45,6 +47,7 @@ export default async function SettingsPage() {
             limitAmount: cb.limitAmount,
           }))}
           categories={categories}
+          initialRecharge={userRecharges[0] || null}
         />
       </main>
     </div>

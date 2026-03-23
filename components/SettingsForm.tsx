@@ -16,9 +16,10 @@ interface SettingsFormProps {
   initialOnline: number;
   initialCategoryBudgets: Array<{ category: string; limitAmount: string }>;
   categories: { id: string; name: string; icon: string }[];
+  initialRecharge: any;
 }
 
-export default function SettingsForm({ initialBudget, initialCash, initialOnline, initialCategoryBudgets, categories }: SettingsFormProps) {
+export default function SettingsForm({ initialBudget, initialCash, initialOnline, initialCategoryBudgets, categories, initialRecharge }: SettingsFormProps) {
   const router = useRouter();
   const [monthlyBudget, setMonthlyBudget] = useState(String(initialBudget));
   const [cashBalance, setCashBalance] = useState(String(initialCash));
@@ -41,6 +42,11 @@ export default function SettingsForm({ initialBudget, initialCash, initialOnline
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editCatName, setEditCatName] = useState("");
   const [editCatIcon, setEditCatIcon] = useState("");
+
+  const [rechargeName, setRechargeName] = useState(initialRecharge?.name || "");
+  const [rechargeAmount, setRechargeAmount] = useState(initialRecharge?.amount || "");
+  const [rechargeEndDate, setRechargeEndDate] = useState(initialRecharge?.endDate || "");
+  const [savingRecharge, setSavingRecharge] = useState(false);
 
   useEffect(() => {
     const prefs = JSON.parse(localStorage.getItem("trackr-notif-prefs") ?? "{}");
@@ -163,6 +169,26 @@ export default function SettingsForm({ initialBudget, initialCash, initialOnline
     }
   };
 
+  const saveRecharge = async () => {
+    if (!rechargeName || !rechargeAmount || !rechargeEndDate) {
+      toast.error("Enter plan name, amount, and due date");
+      return;
+    }
+    setSavingRecharge(true);
+    const res = await fetch("/api/recharges", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: rechargeName, amount: rechargeAmount, endDate: rechargeEndDate }),
+    });
+    setSavingRecharge(false);
+    if (res.ok) {
+      toast.success("Active Plan saved");
+      router.refresh();
+    } else {
+      toast.error("Failed to save plan");
+    }
+  };
+
   const sectionClass = "border-t border-border py-8 group relative overflow-hidden";
   const inputClass =
     "bg-transparent border-b border-border text-text-primary px-0 py-2.5 text-lg focus:outline-none focus:border-primary transition-colors placeholder:text-text-muted/30 appearance-none rounded-none";
@@ -189,6 +215,48 @@ export default function SettingsForm({ initialBudget, initialCash, initialOnline
           </div>
           <button onClick={saveBudget} disabled={savingBudget} className={`${btnClass} w-full sm:w-auto`}>
             {savingBudget ? "Saving" : "Save"}
+          </button>
+        </div>
+      </div>
+
+      {/* Active Mobile/Internet Plan */}
+      <div className={sectionClass}>
+        <h2 className="font-bold text-text-primary text-lg tracking-tighter mb-6">Active Pre-Paid Plan</h2>
+        <div className="flex flex-col sm:flex-row items-center gap-6 mb-4">
+          <div className="relative w-full sm:flex-1 sm:max-w-xs focus-within:text-primary transition-colors">
+            <span className="absolute left-0 bottom-3 text-text-muted pointer-events-none text-xs font-bold uppercase tracking-widest">Plan Name</span>
+            <input
+              type="text"
+              value={rechargeName}
+              onChange={(e) => setRechargeName(e.target.value)}
+              className={`${inputClass} pl-24 w-full`}
+              placeholder="e.g. Jio 5G"
+            />
+          </div>
+          <div className="relative w-full sm:flex-1 sm:max-w-xs focus-within:text-primary transition-colors">
+            <span className="absolute left-0 bottom-3 text-text-muted pointer-events-none text-xs font-bold uppercase tracking-widest">Amount</span>
+            <input
+              type="number"
+              value={rechargeAmount}
+              onChange={(e) => setRechargeAmount(e.target.value)}
+              className={`${inputClass} pl-20 w-full`}
+              placeholder="299"
+            />
+          </div>
+        </div>
+        <div className="flex flex-col sm:flex-row items-end gap-6 relative z-10">
+          <div className="relative w-full sm:max-w-xs focus-within:text-primary transition-colors">
+            <span className="absolute left-0 bottom-3 text-text-muted pointer-events-none text-xs font-bold uppercase tracking-widest bg-bg px-1 z-10">Due Date</span>
+            <input
+              type="date"
+              value={rechargeEndDate}
+              onChange={(e) => setRechargeEndDate(e.target.value)}
+              className={`${inputClass} pl-20 w-full text-sm block`}
+              style={{ colorScheme: "dark" }}
+            />
+          </div>
+          <button onClick={saveRecharge} disabled={savingRecharge} className={`${btnClass} w-full sm:w-auto h-full self-end`}>
+            {savingRecharge ? "Saving" : "Save Plan"}
           </button>
         </div>
       </div>

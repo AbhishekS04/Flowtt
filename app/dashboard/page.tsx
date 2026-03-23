@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { users, expenses, categoryBudgets, userCategories, incomes, recurringExpenses, goals } from "@/lib/schema";
+import { users, expenses, categoryBudgets, userCategories, incomes, recurringExpenses, goals, recharges } from "@/lib/schema";
 import { eq, and, gte, lte } from "drizzle-orm";
 import { getMonthString } from "@/lib/utils";
 import DashboardClient from "@/components/DashboardClient";
@@ -66,7 +66,7 @@ export default async function DashboardPage() {
   const startDate = `${year}-${mon}-01`;
   const endDate = `${year}-${mon}-${new Date(Number(year), Number(mon), 0).getDate()}`;
 
-  const [monthExpenses, catBudgets, customCats, monthIncomes, allExpenses, allIncomes, userSips, userGoals] = await Promise.all([
+  const [monthExpenses, catBudgets, customCats, monthIncomes, allExpenses, allIncomes, userSips, userGoals, userRecharges] = await Promise.all([
     db.select().from(expenses).where(
       and(eq(expenses.userId, user.id), gte(expenses.date, startDate), lte(expenses.date, endDate))
     ),
@@ -81,6 +81,7 @@ export default async function DashboardPage() {
     db.select().from(incomes).where(eq(incomes.userId, user.id)),
     db.select().from(recurringExpenses).where(eq(recurringExpenses.userId, user.id)),
     db.select().from(goals).where(eq(goals.userId, user.id)),
+    db.select().from(recharges).where(eq(recharges.userId, user.id)),
   ]);
 
   const totalSpent = monthExpenses.reduce((sum, e) => sum + parseFloat(e.amount), 0);
@@ -143,6 +144,7 @@ export default async function DashboardPage() {
       categories={customCats}
       sips={userSips}
       goals={userGoals}
+      recharges={userRecharges}
     />
   );
 }
