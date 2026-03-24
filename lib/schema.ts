@@ -95,6 +95,17 @@ export const recharges = pgTable("recharges", {
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 
+export const pushSubscriptions = pgTable("push_subscriptions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  endpoint: text("endpoint").unique().notNull(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  createdAt: timestamp("created_at").default(sql`now()`),
+});
+
 export type User = typeof users.$inferSelect;
 export type UserCategory = typeof userCategories.$inferSelect;
 export type Expense = typeof expenses.$inferSelect;
@@ -103,7 +114,10 @@ export type CategoryBudget = typeof categoryBudgets.$inferSelect;
 export type RecurringExpense = typeof recurringExpenses.$inferSelect;
 export type Goal = typeof goals.$inferSelect;
 export type Recharge = typeof recharges.$inferSelect;
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+
 export type NewExpense = typeof expenses.$inferInsert;
 export type NewIncome = typeof incomes.$inferInsert;
 export type NewGoal = typeof goals.$inferInsert;
 export type NewRecharge = typeof recharges.$inferInsert;
+export type NewPushSubscription = typeof pushSubscriptions.$inferInsert;

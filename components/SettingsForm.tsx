@@ -433,6 +433,50 @@ export default function SettingsForm({ initialBudget, initialCash, initialOnline
             </label>
           ))}
         </div>
+        
+        <div className="mt-8 pt-6 border-t border-border flex justify-between items-center">
+          <div>
+            <h3 className="font-bold text-sm tracking-widest uppercase text-text-primary">Background Web Push</h3>
+            <p className="text-[10px] text-text-muted mt-1 uppercase tracking-widest">Receive 7 AI memes daily & budget alerts even when closed.</p>
+          </div>
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                const permission = await Notification.requestPermission();
+                if (permission !== "granted") {
+                  toast.error("Permission denied");
+                  return;
+                }
+                const registration = await navigator.serviceWorker.register('/sw.js');
+                
+                const applicationServerKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+                const subscription = await registration.pushManager.subscribe({
+                  userVisibleOnly: true,
+                  applicationServerKey: applicationServerKey
+                });
+
+                const res = await fetch('/api/push/subscribe', {
+                  method: 'POST',
+                  body: JSON.stringify(subscription),
+                  headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (res.ok) {
+                  toast.success("Web Push fully enabled!");
+                } else {
+                  toast.error("Failed to save push subscription");
+                }
+              } catch (e) {
+                console.error(e);
+                toast.error("Web Push not supported or blocked");
+              }
+            }}
+            className="text-[10px] font-bold uppercase tracking-widest text-bg bg-primary px-4 py-2 hover:opacity-90 transition-opacity rounded-full ml-4 whitespace-nowrap"
+          >
+            Enable Push
+          </button>
+        </div>
       </div>
     </div>
   );
