@@ -78,8 +78,29 @@ export async function GET(req: Request) {
         prompt = `You are a savage, witty budgeting app notification system. The user's name is ${firstName}. Give me one very short (max 1 sentence, under 80 characters) funny meme notification roasting ${firstName} about their spending habits. Use their name. No quotes.`;
         jokeText = `Hey ${firstName}, did you log your expenses today? Don't make me look at your bank account.`;
       }
-      const modelsToTry = process.env.GEMINI_MODEL ? [process.env.GEMINI_MODEL, ...FALLBACK_MODELS] : FALLBACK_MODELS;
+      let modelsToTry = process.env.GEMINI_MODEL ? [process.env.GEMINI_MODEL, ...FALLBACK_MODELS] : [...FALLBACK_MODELS];
       let aiResponded = false;
+
+      // Automatically dynamically detect models to prevent 404s on newer API versions
+      try {
+        const availableRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${process.env.GEMINI_API_KEY}`);
+        if (availableRes.ok) {
+          const data = await availableRes.json();
+          if (data.models && Array.isArray(data.models)) {
+             const dynamicModels = data.models
+               .filter((m: any) => m.supportedGenerationMethods?.includes("generateContent") && m.name.includes("gemini"))
+               .map((m: any) => m.name.replace("models/", ""));
+               
+             if (dynamicModels.length > 0) {
+               modelsToTry = process.env.GEMINI_MODEL ? [process.env.GEMINI_MODEL, ...dynamicModels] : dynamicModels;
+               // Sort so pro/flash show up first
+               modelsToTry.sort((a,b) => b.localeCompare(a));
+             }
+          }
+        }
+      } catch (listErr) {
+        console.warn("[GEMINI_WARN] Failed to auto-detect models, using defaults.", listErr);
+      }
 
       for (const mName of modelsToTry) {
         if (aiResponded) break;
