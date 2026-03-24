@@ -1,0 +1,14 @@
+name: 12x Daily Meme Push Scheduler
+
+on:
+  schedule:
+    # Runs every 2 hours: 10:00 PM, 12:00 AM, 2:00 AM, etc (IST)
+    - cron: '0 */2 * * *'
+  workflow_dispatch: # Allows you to manually trigger it from the GitHub UI for testing
+
+jobs:
+  ping_memes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Meme Notification
+        run: curl -sSf https://flowtt.vercel.app/api/cron/push?type=meme
