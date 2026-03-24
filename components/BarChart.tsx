@@ -8,6 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
+  Cell,
 } from "recharts";
 import { formatCurrency, getDaysInMonth, getMonthString } from "@/lib/utils";
 
@@ -20,6 +21,18 @@ export default function DailyBarChart({ dailyTotals, month }: DailyBarChartProps
   const currentMonth = month ?? getMonthString();
   const [year, mon] = currentMonth.split("-").map(Number);
   const daysInMonth = getDaysInMonth(currentMonth);
+
+  const maxAmount = Math.max(...Object.values(dailyTotals), 0);
+  const getBarColor = (amount: number) => {
+    if (maxAmount === 0 || amount === 0) return "#4ade80"; // Light green
+    const ratio = amount / maxAmount;
+    if (ratio <= 0.15) return "#4ade80"; // Light green
+    if (ratio <= 0.35) return "#16a34a"; // Deep green
+    if (ratio <= 0.55) return "#eab308"; // Yellow
+    if (ratio <= 0.75) return "#f97316"; // Orange
+    if (ratio <= 0.90) return "#ef4444"; // Light red
+    return "#b91c1c"; // Deep red
+  };
 
   const data = Array.from({ length: daysInMonth }, (_, i) => {
     const day = String(i + 1).padStart(2, "0");
@@ -43,12 +56,6 @@ export default function DailyBarChart({ dailyTotals, month }: DailyBarChartProps
       </div>
       <ResponsiveContainer width="100%" height={240}>
         <RechartsBarChart data={data} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
-          <defs>
-            <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.8}/>
-              <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.3}/>
-            </linearGradient>
-          </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="#1f1f1f" vertical={false} />
           <XAxis
             dataKey="day"
@@ -82,11 +89,14 @@ export default function DailyBarChart({ dailyTotals, month }: DailyBarChartProps
           />
           <Bar 
             dataKey="amount" 
-            fill="url(#barGradient)" 
             radius={[4, 4, 0, 0]} 
             maxBarSize={28} 
             animationDuration={1500}
-          />
+          >
+            {data.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={getBarColor(entry.amount)} />
+            ))}
+          </Bar>
         </RechartsBarChart>
       </ResponsiveContainer>
     </div>

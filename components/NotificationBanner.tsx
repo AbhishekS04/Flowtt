@@ -28,10 +28,17 @@ export default function NotificationBanner({ data }: NotificationBannerProps) {
       if (alert.type === "error") toast.error(alert.message);
       else if (alert.type === "warning") toast.warning(alert.message);
       else toast.success(alert.message);
+
+      if ("Notification" in window && Notification.permission === "granted") {
+        new Notification("Trackr Alert", {
+          body: alert.message,
+          icon: "/apple-icon.png",
+        });
+      }
     }
 
     sessionStorage.setItem(sessionKey, "1");
-  }, []);
+  }, [alerts]);
 
   if (!topAlert) return null;
 

@@ -21,7 +21,8 @@ export async function POST(req: Request) {
       targetAmount: targetAmount.toString(),
       currentAmount: "0",
       icon: icon || "🎯",
-      deadline: deadline ? new Date(deadline).toISOString() : null,
+      // deadline: deadline ? new Date(deadline).toISOString() : null,
+      deadline: deadline || null,
     }).returning();
 
     return NextResponse.json(newGoal[0]);

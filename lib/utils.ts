@@ -1,11 +1,14 @@
 // Internal defaults used for seeding only
 const DEFAULT_CATEGORY_COLORS: Record<string, string> = {
-  food: "#ef4444",
-  transport: "#3b82f6",
-  entertainment: "#8b5cf6",
-  health: "#10b981",
-  shopping: "#ec4899",
-  other: "#f59e0b",
+  food: "#ef4444", // red-500
+  transport: "#3b82f6", // blue-500
+  entertainment: "#8b5cf6", // violet-500
+  health: "#10b981", // emerald-500
+  shopping: "#ec4899", // pink-500
+  other: "#a8a29e", // stone-400
+  investments: "#eab308", // yellow-500
+  bills: "#f97316", // orange-500
+  education: "#06b6d4", // cyan-500
 };
 
 export function formatCurrency(amount: number | string): string {
@@ -25,14 +28,18 @@ export function getCategoryColor(category: string): string {
   const baseColor = DEFAULT_CATEGORY_COLORS[category.toLowerCase()];
   if (baseColor) return baseColor;
 
-  // For custom categories, generate a deterministic vibrant color
+  // Modern vibrant and distinct colors for custom categories
   const colors = [
-    "#06b6d4", // cyan-500
-    "#10b981", // emerald-500
-    "#f59e0b", // amber-500
     "#f43f5e", // rose-500
-    "#8b5cf6", // violet-500
-    "#3b82f6", // blue-500
+    "#14b8a6", // teal-500
+    "#d946ef", // fuchsia-500
+    "#84cc16", // lime-500
+    "#6366f1", // indigo-500
+    "#f59e0b", // amber-500
+    "#22d3ee", // cyan-400
+    "#a855f7", // purple-500
+    "#fb923c", // orange-400
+    "#34d399", // emerald-400
   ];
   let hash = 0;
   for (let i = 0; i < category.length; i++) {

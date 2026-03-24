@@ -430,6 +430,9 @@ export default function SettingsForm({ initialBudget, initialCash, initialOnline
                 onClick={() => {
                   set(!value);
                   saveNotifPrefs(key, !value);
+                  if (!value && "Notification" in window && Notification.permission !== "granted") {
+                    Notification.requestPermission();
+                  }
                 }}
                 className={`relative w-10 h-5 border transition-all duration-300 ease-in-out ${
                   value ? "bg-primary border-primary" : "bg-transparent border-border"

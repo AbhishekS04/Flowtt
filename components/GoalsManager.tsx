@@ -4,13 +4,14 @@ import { useState } from "react";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
 
 interface GoalsManagerProps {
   initialGoals: any[];
 }
 
 export default function GoalsManager({ initialGoals }: GoalsManagerProps) {
+  const router = useRouter();
   const [goals, setGoals] = useState<any[]>(initialGoals);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [newGoal, setNewGoal] = useState({ name: "", targetAmount: "", icon: "🎯", deadline: "" });
@@ -39,6 +40,7 @@ export default function GoalsManager({ initialGoals }: GoalsManagerProps) {
       setIsAddOpen(false);
       setNewGoal({ name: "", targetAmount: "", icon: "🎯", deadline: "" });
       toast.success("Goal added!");
+      router.refresh();
     } else {
       toast.error("Failed to add goal.");
     }
@@ -65,6 +67,7 @@ export default function GoalsManager({ initialGoals }: GoalsManagerProps) {
       setFundGoalId(null);
       setFundAmount("");
       toast.success("Funds added!");
+      router.refresh();
     } else {
       toast.error("Failed to add funds.");
     }
@@ -75,6 +78,7 @@ export default function GoalsManager({ initialGoals }: GoalsManagerProps) {
     if (res.ok) {
       setGoals(goals.filter(g => g.id !== id));
       toast.success("Goal deleted!");
+      router.refresh();
     }
   };
 
@@ -152,7 +156,7 @@ export default function GoalsManager({ initialGoals }: GoalsManagerProps) {
       </div>
 
       <AnimatePresence>
-         {isAddOpen && typeof document !== "undefined" && createPortal(
+         {isAddOpen && (
             <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center">
                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-bg/80 backdrop-blur-sm" onClick={() => setIsAddOpen(false)} />
                <motion.div initial={{ scale: 0.95, opacity: 0, y: 50 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 50 }} className="relative bg-card border border-border p-8 pb-32 md:pb-8 rounded-t-3xl md:rounded-3xl w-full max-w-md shadow-2xl max-h-[85dvh] overflow-y-auto">
@@ -180,8 +184,7 @@ export default function GoalsManager({ initialGoals }: GoalsManagerProps) {
                     <button type="submit" className="w-full bg-text-primary text-bg font-bold uppercase tracking-widest text-xs py-4 rounded-full mt-4 hover:opacity-90 transition-opacity">Let's Go</button>
                  </form>
                </motion.div>
-            </div>,
-            document.body
+            </div>
          )}
       </AnimatePresence>
     </div>

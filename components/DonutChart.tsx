@@ -54,20 +54,6 @@ export default function DonutChart({ categoryBreakdown }: DonutChartProps) {
                 />
               ))}
             </Pie>
-            <Tooltip
-              contentStyle={{
-                background: "rgba(0, 0, 0, 0.9)",
-                backdropFilter: "blur(12px)",
-                border: "1px solid #333333",
-                borderRadius: "12px",
-                color: "#ffffff",
-                boxShadow: "0 10px 40px rgba(0,0,0,0.5)",
-                padding: "10px 14px",
-              }}
-              itemStyle={{ color: "#ffffff", fontWeight: 700, fontSize: "12px" }}
-              formatter={(value: number) => [formatCurrency(value), ""]}
-              cursor={false}
-            />
           </PieChart>
         </ResponsiveContainer>
         <div className="absolute flex flex-col items-center pointer-events-none transition-all duration-300">
