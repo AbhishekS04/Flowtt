@@ -141,7 +141,12 @@ export async function GET(req: Request) {
         } catch (pushError: any) {
           console.error(`[PUSH_ERROR] Status: ${pushError.statusCode}, Body: ${pushError.body}, Endpoint: ${sub.endpoint.slice(0, 50)}`);
           if (pushError.statusCode === 404 || pushError.statusCode === 410) {
-            await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, sub.endpoint));
+            try {
+              await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, sub.endpoint));
+              console.log(`[PUSH_CLEANUP] Deleted stale subscription: ${sub.endpoint.slice(0, 50)}`);
+            } catch (dbErr) {
+              console.error(`[PUSH_CLEANUP_ERROR] Failed to delete stale sub:`, dbErr);
+            }
           }
         }
       }));
