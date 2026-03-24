@@ -107,13 +107,13 @@ export default function DashboardClient({
         {activeTab === "overview" && (
           <div className="space-y-8 animate-fade-in">
             {/* Total Balance Card */}
-            <div className="bg-card border border-border p-8 rounded-3xl shadow-sm relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-8 opacity-100 transition-opacity">
-                <span className="text-8xl drop-shadow-sm opacity-100">💰</span>
+            <div className="bg-card border border-border p-6 md:p-8 rounded-3xl shadow-sm relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-4 md:p-8 opacity-100 md:opacity-100 transition-opacity z-0">
+                <span className="text-6xl md:text-8xl drop-shadow-sm">💰</span>
               </div>
-              <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-2 relative z-10">Total Balance</p>
+              <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-2 relative z-10 w-3/4">Total Balance</p>
               <div className="flex items-center gap-4 mb-2 relative z-10">
-                <p className="text-5xl font-black tracking-tighter text-text-primary">₹{(cashBalance + onlineBalance).toFixed(2)}</p>
+                <p className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tighter text-text-primary break-all sm:break-normal">₹{(cashBalance + onlineBalance).toFixed(2)}</p>
               </div>
               <p className="text-xs text-text-muted font-bold tracking-widest uppercase relative z-10 flex items-center gap-2">
                 <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500"></span>
@@ -124,21 +124,21 @@ export default function DashboardClient({
             {/* Account Balances */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-card border border-border p-6 rounded-3xl shadow-sm relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-6 opacity-100 transition-opacity">
-                  <span className="text-6xl drop-shadow-sm">💵</span>
+                <div className="absolute top-0 right-0 p-4 md:p-6 opacity-100 md:opacity-100 transition-opacity z-0">
+                  <span className="text-5xl md:text-6xl drop-shadow-sm">💵</span>
                 </div>
-                <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-1">Cash Balance</p>
-                <p className="text-4xl font-black tracking-tighter text-text-primary mb-2">₹{cashBalance.toFixed(2)}</p>
-                <p className="text-xs text-text-muted font-bold tracking-widest uppercase">
+                <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-1 relative z-10">Cash Balance</p>
+                <p className="text-3xl sm:text-4xl font-black tracking-tighter text-text-primary mb-2 relative z-10 break-all sm:break-normal">₹{cashBalance.toFixed(2)}</p>
+                <p className="text-xs text-text-muted font-bold tracking-widest uppercase relative z-10">
                   Spent this month: <span className="text-text-primary">₹{allExpenses.filter(e => e.paymentMethod === 'cash' && e.date && e.date.startsWith(month)).reduce((sum, e) => sum + parseFloat(e.amount), 0).toFixed(2)}</span>
                 </p>
               </div>
               <div className="bg-card border border-border p-6 rounded-3xl shadow-sm relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-6 opacity-100 transition-opacity">
-                  <span className="text-6xl drop-shadow-sm">💳</span>
+                <div className="absolute top-0 right-0 p-4 md:p-6 opacity-100 md:opacity-100 transition-opacity z-0">
+                  <span className="text-5xl md:text-6xl drop-shadow-sm">💳</span>
                 </div>
-                <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-1">Online Balance</p>
-                <p className="text-4xl font-black tracking-tighter text-text-primary mb-2">₹{onlineBalance.toFixed(2)}</p>
+                <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-1 relative z-10">Online Balance</p>
+                <p className="text-3xl sm:text-4xl font-black tracking-tighter text-text-primary mb-2 relative z-10 break-all sm:break-normal">₹{onlineBalance.toFixed(2)}</p>
                 <p className="text-xs text-text-muted font-bold tracking-widest uppercase">
                   Spent this month: <span className="text-text-primary">₹{allExpenses.filter(e => e.paymentMethod === 'online' && e.date && e.date.startsWith(month)).reduce((sum, e) => sum + parseFloat(e.amount), 0).toFixed(2)}</span>
                 </p>
