@@ -99,10 +99,6 @@ export default async function DashboardPage() {
   const categoryLimits: Record<string, number> = {};
   for (const cb of catBudgets) categoryLimits[cb.category] = parseFloat(cb.limitAmount);
 
-  const recentExpenses = [...monthExpenses]
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 5);
-
   const allTransactions = [
     ...monthExpenses.map(e => ({ ...e, type: 'expense' })),
     ...monthIncomes.map(i => ({ 
@@ -110,7 +106,11 @@ export default async function DashboardPage() {
       category: i.source, 
       type: 'income'
     }))
-  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  ].sort((a, b) => {
+    const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+    if (dateDiff !== 0) return dateDiff;
+    return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+  });
 
   let cashExpenses = 0, onlineExpenses = 0;
   for (const e of allExpenses) {

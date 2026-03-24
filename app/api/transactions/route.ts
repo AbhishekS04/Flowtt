@@ -57,7 +57,8 @@ export async function GET(request: Request) {
       note: i.note, 
       type: "income" as const, 
       category: i.source, 
-      paymentMethod: i.paymentMethod 
+      paymentMethod: i.paymentMethod,
+      createdAt: i.createdAt 
     }))
   ];
 
@@ -67,7 +68,11 @@ export async function GET(request: Request) {
     transactions = transactions.filter(t => t.type === "expense" && t.category === category);
   }
 
-  transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  transactions.sort((a, b) => {
+    const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+    if (dateDiff !== 0) return dateDiff;
+    return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+  });
 
   return NextResponse.json(transactions);
 }
