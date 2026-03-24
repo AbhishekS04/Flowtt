@@ -8,8 +8,14 @@ import { eq } from "drizzle-orm";
 
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
-const modelName = process.env.GEMINI_MODEL || "gemini-1.5-flash";
-const model = genAI.getGenerativeModel({ model: modelName });
+
+const FALLBACK_MODELS = [
+  "gemini-1.5-flash-latest",
+  "gemini-1.5-pro-latest",
+  "gemini-1.5-flash",
+  "gemini-pro",
+  "gemini-1.0-pro"
+];
 
 // Configure Web Push VAPID keys
 webpush.setVapidDetails(
@@ -72,14 +78,26 @@ export async function GET(req: Request) {
         prompt = `You are a savage, witty budgeting app notification system. The user's name is ${firstName}. Give me one very short (max 1 sentence, under 80 characters) funny meme notification roasting ${firstName} about their spending habits. Use their name. No quotes.`;
         jokeText = `Hey ${firstName}, did you log your expenses today? Don't make me look at your bank account.`;
       }
-      try {
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        if (response.text()) {
-          jokeText = response.text().trim().replace(/^["']|["']$/g, '');
+      const modelsToTry = process.env.GEMINI_MODEL ? [process.env.GEMINI_MODEL, ...FALLBACK_MODELS] : FALLBACK_MODELS;
+      let aiResponded = false;
+
+      for (const mName of modelsToTry) {
+        if (aiResponded) break;
+        try {
+          const tryModel = genAI.getGenerativeModel({ model: mName });
+          const result = await tryModel.generateContent(prompt);
+          const response = await result.response;
+          if (response.text()) {
+            jokeText = response.text().trim().replace(/^["']|["']$/g, '');
+            aiResponded = true;
+          }
+        } catch (aiError: any) {
+          console.warn(`[GEMINI_WARN] Model ${mName} failed: ${aiError.message}. Trying next fallback...`);
         }
-      } catch (aiError) {
-        console.error(`[GEMINI_ERROR] Fallback to default joke for ${firstName}`, aiError);
+      }
+      
+      if (!aiResponded) {
+        console.error(`[GEMINI_ERROR] All fallback models failed for ${firstName}`);
       }
 
       const payload = JSON.stringify({
