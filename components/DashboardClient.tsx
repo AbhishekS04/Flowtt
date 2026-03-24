@@ -8,6 +8,7 @@ import { UserButton } from "@clerk/nextjs";
 import { toast } from "sonner";
 import BudgetCard from "@/components/BudgetCard";
 import NotificationBanner from "@/components/NotificationBanner";
+import CategoryBudgetsCard from "@/components/CategoryBudgetsCard";
 import DonutChart from "@/components/DonutChart";
 import DailyBarChart from "@/components/BarChart";
 import RecentExpenses from "@/components/RecentExpenses";
@@ -241,6 +242,13 @@ export default function DashboardClient({
             </div>
 
             <BudgetCard totalBudget={totalBudget} totalSpent={totalSpent} />
+            
+            <CategoryBudgetsCard 
+              categoryLimits={categoryLimits} 
+              categoryBreakdown={categoryBreakdown} 
+              categories={categories} 
+            />
+
             <NotificationBanner data={{ totalBudget: totalBudget, totalSpent: totalSpent, categorySpending: categoryBreakdown, categoryLimits: categoryLimits }} />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <DonutChart categoryBreakdown={categoryBreakdown} />

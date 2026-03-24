@@ -33,12 +33,8 @@ export default function SettingsForm({ initialBudget, initialCash, initialOnline
   });
   const [notifyBudget, setNotifyBudget] = useState(true);
   const [notifyCategory, setNotifyCategory] = useState(true);
-  const [savingBudget, setSavingBudget] = useState(false);
-  const [savingBalances, setSavingBalances] = useState(false);
-  const [savingCategory, setSavingCategory] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const [newCatIcon, setNewCatIcon] = useState("");
-  const [addingCat, setAddingCat] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editCatName, setEditCatName] = useState("");
   const [editCatIcon, setEditCatIcon] = useState("");
@@ -46,7 +42,6 @@ export default function SettingsForm({ initialBudget, initialCash, initialOnline
   const [rechargeName, setRechargeName] = useState(initialRecharge?.name || "");
   const [rechargeAmount, setRechargeAmount] = useState(initialRecharge?.amount || "");
   const [rechargeEndDate, setRechargeEndDate] = useState(initialRecharge?.endDate || "");
-  const [savingRecharge, setSavingRecharge] = useState(false);
 
   useEffect(() => {
     const prefs = JSON.parse(localStorage.getItem("trackr-notif-prefs") ?? "{}");
@@ -60,52 +55,38 @@ export default function SettingsForm({ initialBudget, initialCash, initialOnline
     localStorage.setItem("trackr-notif-prefs", JSON.stringify(prefs));
   };
 
-  const saveBudget = async () => {
+  const saveBudget = () => {
     const budget = parseFloat(monthlyBudget);
     if (isNaN(budget) || budget < 0) {
       toast.error("Enter a valid budget amount");
       return;
     }
-    setSavingBudget(true);
-    const res = await fetch("/api/budget", {
+    toast.success("Budget saved");
+    fetch("/api/budget", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ monthlyBudget: budget }),
-    });
-    setSavingBudget(false);
-    if (res.ok) {
-      toast.success("Budget saved");
-      router.refresh();
-    } else {
-      toast.error("Failed to save budget");
-    }
+    }).then(() => router.refresh());
   };
 
-  const saveBalances = async () => {
+  const saveBalances = () => {
     const cash = parseFloat(cashBalance);
     const online = parseFloat(onlineBalance);
     if (isNaN(cash) || isNaN(online)) {
       toast.error("Enter valid numeric amounts for balances");
       return;
     }
-    setSavingBalances(true);
-    const res = await fetch("/api/balances", {
+    toast.success("Balances saved");
+    fetch("/api/balances", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ initialCashBalance: cash, initialOnlineBalance: online }),
-    });
-    setSavingBalances(false);
-    if (res.ok) {
-      toast.success("Balances saved");
-      router.refresh();
-    } else {
-      toast.error("Failed to save balances");
-    }
+    }).then(() => router.refresh());
   };
 
-  const saveCategoryLimits = async () => {
-    setSavingCategory(true);
+  const saveCategoryLimits = () => {
     const month = getMonthString();
+    toast.success("Category limits saved");
     const saves = Object.entries(categoryLimits)
       .filter(([, v]) => v !== "")
       .map(([category, limitAmount]) =>
@@ -115,78 +96,55 @@ export default function SettingsForm({ initialBudget, initialCash, initialOnline
           body: JSON.stringify({ category, limitAmount: parseFloat(limitAmount), month }),
         })
       );
-    await Promise.all(saves);
-    setSavingCategory(false);
-    toast.success("Category limits saved");
-    router.refresh();
+    Promise.all(saves).then(() => router.refresh());
   };
 
-  const addCategory = async () => {
+  const addCategory = () => {
     if (!newCatName || !newCatIcon) {
       toast.error("Enter both name and icon");
       return;
     }
-    setAddingCat(true);
-    const res = await fetch("/api/categories", {
+    toast.success("Category added");
+    fetch("/api/categories", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: newCatName.toLowerCase(), icon: newCatIcon }),
-    });
-    setAddingCat(false);
-    if (res.ok) {
-      toast.success("Category added");
+    }).then(() => {
       setNewCatName("");
       setNewCatIcon("");
-      setTimeout(() => router.refresh(), 500);
-    } else {
-      toast.error("Failed to add category");
-    }
+      router.refresh();
+    });
   };
 
-  const deleteCategory = async (id: string) => {
+  const deleteCategory = (id: string) => {
     if (!confirm("Are you sure? Old transactions in this category will keep their name but lose their specific icon.")) return;
-    const res = await fetch(`/api/categories/${id}`, { method: "DELETE" });
-    if (res.ok) {
-      toast.success("Category deleted");
-      setTimeout(() => router.refresh(), 500);
-    } else {
-      toast.error("Failed to delete category");
-    }
+    toast.success("Category deleted");
+    fetch(`/api/categories/${id}`, { method: "DELETE" }).then(() => router.refresh());
   };
 
-  const updateCategory = async (id: string) => {
-    const res = await fetch(`/api/categories/${id}`, {
+  const updateCategory = (id: string) => {
+    toast.success("Category updated");
+    fetch(`/api/categories/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: editCatName.toLowerCase(), icon: editCatIcon }),
-    });
-    if (res.ok) {
-      toast.success("Category updated");
+    }).then(() => {
       setEditingId(null);
-      setTimeout(() => router.refresh(), 500);
-    } else {
-      toast.error("Failed to update category");
-    }
+      router.refresh();
+    });
   };
 
-  const saveRecharge = async () => {
+  const saveRecharge = () => {
     if (!rechargeName || !rechargeAmount || !rechargeEndDate) {
       toast.error("Enter plan name, amount, and due date");
       return;
     }
-    setSavingRecharge(true);
-    const res = await fetch("/api/recharges", {
+    toast.success("Active Plan saved");
+    fetch("/api/recharges", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: rechargeName, amount: rechargeAmount, endDate: rechargeEndDate }),
-    });
-    setSavingRecharge(false);
-    if (res.ok) {
-      toast.success("Active Plan saved");
-      router.refresh();
-    } else {
-      toast.error("Failed to save plan");
-    }
+    }).then(() => router.refresh());
   };
 
   const sectionClass = "border-t border-border py-8 group relative overflow-hidden";
@@ -213,8 +171,8 @@ export default function SettingsForm({ initialBudget, initialCash, initialOnline
               placeholder="0.00"
             />
           </div>
-          <button onClick={saveBudget} disabled={savingBudget} className={`${btnClass} w-full sm:w-auto`}>
-            {savingBudget ? "Saving" : "Save"}
+          <button onClick={saveBudget} className={`${btnClass} w-full sm:w-auto`}>
+            Save
           </button>
         </div>
       </div>
@@ -255,8 +213,8 @@ export default function SettingsForm({ initialBudget, initialCash, initialOnline
               style={{ colorScheme: "dark" }}
             />
           </div>
-          <button onClick={saveRecharge} disabled={savingRecharge} className={`${btnClass} w-full sm:w-auto h-full self-end`}>
-            {savingRecharge ? "Saving" : "Save Plan"}
+          <button onClick={saveRecharge} className={`${btnClass} w-full sm:w-auto h-full self-end`}>
+            Save Plan
           </button>
         </div>
       </div>
@@ -285,8 +243,8 @@ export default function SettingsForm({ initialBudget, initialCash, initialOnline
               placeholder="0.00"
             />
           </div>
-          <button onClick={saveBalances} disabled={savingBalances} className={`${btnClass} w-full sm:w-auto h-full self-end`}>
-            {savingBalances ? "Saving" : "Save"}
+          <button onClick={saveBalances} className={`${btnClass} w-full sm:w-auto h-full self-end`}>
+            Save
           </button>
         </div>
       </div>
@@ -320,10 +278,9 @@ export default function SettingsForm({ initialBudget, initialCash, initialOnline
         </div>
         <button
           onClick={saveCategoryLimits}
-          disabled={savingCategory}
           className={`${btnClass} mt-10 w-full sm:w-auto`}
         >
-          {savingCategory ? "Saving" : "Save Allocations"}
+          Save Allocations
         </button>
       </div>
 
@@ -399,7 +356,7 @@ export default function SettingsForm({ initialBudget, initialCash, initialOnline
             onChange={e => setNewCatName(e.target.value)}
             className={`${inputClass} flex-1`}
           />
-          <button onClick={addCategory} disabled={addingCat} className={`${btnClass}`}>
+          <button onClick={addCategory} className={`${btnClass}`}>
             Create
           </button>
         </div>
@@ -407,7 +364,36 @@ export default function SettingsForm({ initialBudget, initialCash, initialOnline
 
       {/* Notification Preferences */}
       <div className={sectionClass}>
-        <h2 className="font-bold text-text-primary text-lg tracking-tighter mb-8">Alerts</h2>
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="font-bold text-text-primary text-lg tracking-tighter">Alerts</h2>
+          <button 
+            type="button" 
+            onClick={() => {
+              if ("Notification" in window && Notification.permission === "granted") {
+                new Notification("Test Alert", {
+                  body: "This is what a budget alert looks like!",
+                  icon: "/apple-icon.png",
+                });
+              } else if ("Notification" in window) {
+                Notification.requestPermission().then(p => {
+                  if (p === "granted") {
+                    new Notification("Test Alert", {
+                      body: "This is what a budget alert looks like!",
+                      icon: "/apple-icon.png",
+                    });
+                  } else {
+                    toast.error("Notification permission denied");
+                  }
+                });
+              } else {
+                toast.error("Browser does not support notifications");
+              }
+            }}
+            className="text-[10px] font-bold uppercase tracking-widest text-text-primary border border-border px-3 py-1.5 hover:bg-border transition-colors rounded-full"
+          >
+            Test Alert
+          </button>
+        </div>
         <div className="space-y-6">
           {[
             {
