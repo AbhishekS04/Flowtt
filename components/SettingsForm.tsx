@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { getMonthString } from "@/lib/utils";
+import { createBiometricLock, verifyBiometricLock, disableBiometricLock, isBiometricLockEnabled } from "@/lib/webauthn";
 
 interface SettingsData {
   monthlyBudget: string;
@@ -44,8 +45,10 @@ export default function SettingsForm({ initialBudget, initialCash, initialOnline
   const [rechargeEndDate, setRechargeEndDate] = useState(initialRecharge?.endDate || "");
 
   const [isPushEnabled, setIsPushEnabled] = useState(false);
+  const [isAppLockEnabled, setIsAppLockEnabled] = useState(false);
 
   useEffect(() => {
+    setIsAppLockEnabled(isBiometricLockEnabled());
     const prefs = JSON.parse(localStorage.getItem("trackr-notif-prefs") ?? "{}");
     setNotifyBudget(prefs.notifyBudget !== false);
     setNotifyCategory(prefs.notifyCategory !== false);
@@ -240,6 +243,27 @@ export default function SettingsForm({ initialBudget, initialCash, initialOnline
     } catch (e: any) {
       console.error(e);
       toast.error(e.message || "Web Push not supported or blocked");
+    }
+  };
+
+  const toggleAppLock = async () => {
+    if (isAppLockEnabled) {
+      const success = await verifyBiometricLock();
+      if (success) {
+        disableBiometricLock();
+        setIsAppLockEnabled(false);
+        toast.success("App Lock disabled.");
+      } else {
+        toast.error("Verification failed. Cannot disable App Lock.");
+      }
+    } else {
+      const success = await createBiometricLock();
+      if (success) {
+        setIsAppLockEnabled(true);
+        toast.success("App Lock enabled! Your data is secure.");
+      } else {
+        toast.error("Failed to create App Lock. Device may not support it.");
+      }
     }
   };
 
@@ -514,6 +538,27 @@ export default function SettingsForm({ initialBudget, initialCash, initialOnline
             }`}
           >
             {isPushEnabled ? "Disable Push" : "Enable Push"}
+          </button>
+        </div>
+      </div>
+
+      {/* Privacy & Security */}
+      <div className={sectionClass}>
+        <h2 className="font-bold text-text-primary text-lg tracking-tighter mb-8">Privacy & Security</h2>
+        
+        <div className="flex justify-between items-center">
+          <div>
+            <h3 className="font-bold text-sm tracking-widest uppercase text-text-primary">Biometric App Lock</h3>
+            <p className="text-[10px] text-text-muted mt-1 uppercase tracking-widest">Require Fingerprint / FaceID when opening the app.</p>
+          </div>
+          <button
+            type="button"
+            onClick={toggleAppLock}
+            className={`text-[10px] font-bold uppercase tracking-widest px-4 py-2 hover:opacity-90 transition-opacity ml-4 whitespace-nowrap border ${
+              isAppLockEnabled ? 'bg-transparent border-red-500/50 text-red-500' : 'bg-text-primary border-text-primary text-bg'
+            }`}
+          >
+            {isAppLockEnabled ? "Disable Lock" : "Enable Lock"}
           </button>
         </div>
       </div>
