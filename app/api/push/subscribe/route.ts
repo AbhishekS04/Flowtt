@@ -1,15 +1,21 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { pushSubscriptions } from "@/lib/schema";
+import { pushSubscriptions, users } from "@/lib/schema";
 import { auth } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
 
 export async function POST(req: Request) {
   try {
-    const { userId } = auth();
-    if (!userId) {
+    const { userId: clerkUserId } = auth();
+    if (!clerkUserId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
+
+    const localUser = await db.select({ id: users.id }).from(users).where(eq(users.clerkUserId, clerkUserId));
+    if (localUser.length === 0) {
+      return new NextResponse("User not found in DB", { status: 404 });
+    }
+    const localUserId = localUser[0].id;
 
     const subscription = await req.json();
 
@@ -18,7 +24,7 @@ export async function POST(req: Request) {
 
     if (existing.length === 0) {
       await db.insert(pushSubscriptions).values({
-        userId,
+        userId: localUserId,
         endpoint: subscription.endpoint,
         p256dh: subscription.keys.p256dh,
         auth: subscription.keys.auth,
@@ -34,8 +40,8 @@ export async function POST(req: Request) {
 
 export async function DELETE(req: Request) {
   try {
-    const { userId } = auth();
-    if (!userId) {
+    const { userId: clerkUserId } = auth();
+    if (!clerkUserId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 

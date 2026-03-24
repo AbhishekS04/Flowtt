@@ -43,10 +43,22 @@ export default function SettingsForm({ initialBudget, initialCash, initialOnline
   const [rechargeAmount, setRechargeAmount] = useState(initialRecharge?.amount || "");
   const [rechargeEndDate, setRechargeEndDate] = useState(initialRecharge?.endDate || "");
 
+  const [isPushEnabled, setIsPushEnabled] = useState(false);
+
   useEffect(() => {
     const prefs = JSON.parse(localStorage.getItem("trackr-notif-prefs") ?? "{}");
     setNotifyBudget(prefs.notifyBudget !== false);
     setNotifyCategory(prefs.notifyCategory !== false);
+    
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      navigator.serviceWorker.getRegistration().then(reg => {
+        if (reg) {
+          reg.pushManager.getSubscription().then(sub => {
+            setIsPushEnabled(!!sub);
+          });
+        }
+      });
+    }
   }, []);
 
   const saveNotifPrefs = (key: string, value: boolean) => {
@@ -145,6 +157,90 @@ export default function SettingsForm({ initialBudget, initialCash, initialOnline
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: rechargeName, amount: rechargeAmount, endDate: rechargeEndDate }),
     }).then(() => router.refresh());
+  };
+
+  const togglePush = async () => {
+    try {
+      if (!('serviceWorker' in navigator)) {
+        toast.error("Service Workers not supported in this browser");
+        return;
+      }
+      let registration = await navigator.serviceWorker.getRegistration();
+      
+      if (!registration) {
+        try {
+          registration = await navigator.serviceWorker.register('/sw.js');
+        } catch (err) {
+          toast.error("Service Worker registration failed. Please ensure you are not in development mode with PWA disabled, or run a build.");
+          console.error("SW Registration Error:", err);
+          return;
+        }
+      }
+      
+      await navigator.serviceWorker.ready;
+      registration = await navigator.serviceWorker.getRegistration();
+      
+      if (!registration) {
+        toast.error("Service worker not available.");
+        return;
+      }
+      
+      if (isPushEnabled) {
+        const sub = await registration.pushManager.getSubscription();
+        if (sub) {
+          await fetch('/api/push/subscribe', {
+            method: 'DELETE',
+            body: JSON.stringify({ endpoint: sub.endpoint }),
+            headers: { 'Content-Type': 'application/json' }
+          });
+          await sub.unsubscribe();
+        }
+        setIsPushEnabled(false);
+        toast.success("Web Push disabled");
+        return;
+      }
+
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        toast.error("Permission denied");
+        return;
+      }
+      
+      const applicationServerKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+      if (!applicationServerKey) {
+        toast.error("VAPID Public Key missing from environment");
+        return;
+      }
+
+      const padding = '='.repeat((4 - applicationServerKey.length % 4) % 4);
+      const base64 = (applicationServerKey + padding).replace(/\-/g, '+').replace(/_/g, '/');
+      const rawData = window.atob(base64);
+      const outputArray = new Uint8Array(rawData.length);
+      for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+      }
+
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: outputArray
+      });
+
+      const res = await fetch('/api/push/subscribe', {
+        method: 'POST',
+        body: JSON.stringify(subscription),
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (res.ok) {
+        setIsPushEnabled(true);
+        toast.success("Web Push fully enabled!");
+      } else {
+        toast.error("Failed to save push subscription");
+      }
+    } catch (e: any) {
+      console.error(e);
+      toast.error(e.message || "Web Push not supported or blocked");
+    }
   };
 
   const sectionClass = "border-t border-border py-8 group relative overflow-hidden";
@@ -364,36 +460,7 @@ export default function SettingsForm({ initialBudget, initialCash, initialOnline
 
       {/* Notification Preferences */}
       <div className={sectionClass}>
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="font-bold text-text-primary text-lg tracking-tighter">Alerts</h2>
-          <button 
-            type="button" 
-            onClick={() => {
-              if ("Notification" in window && Notification.permission === "granted") {
-                new Notification("Test Alert", {
-                  body: "This is what a budget alert looks like!",
-                  icon: "/apple-icon.png",
-                });
-              } else if ("Notification" in window) {
-                Notification.requestPermission().then(p => {
-                  if (p === "granted") {
-                    new Notification("Test Alert", {
-                      body: "This is what a budget alert looks like!",
-                      icon: "/apple-icon.png",
-                    });
-                  } else {
-                    toast.error("Notification permission denied");
-                  }
-                });
-              } else {
-                toast.error("Browser does not support notifications");
-              }
-            }}
-            className="text-[10px] font-bold uppercase tracking-widest text-text-primary border border-border px-3 py-1.5 hover:bg-border transition-colors rounded-full"
-          >
-            Test Alert
-          </button>
-        </div>
+        <h2 className="font-bold text-text-primary text-lg tracking-tighter mb-8">Alerts</h2>
         <div className="space-y-6">
           {[
             {
@@ -437,44 +504,16 @@ export default function SettingsForm({ initialBudget, initialCash, initialOnline
         <div className="mt-8 pt-6 border-t border-border flex justify-between items-center">
           <div>
             <h3 className="font-bold text-sm tracking-widest uppercase text-text-primary">Background Web Push</h3>
-            <p className="text-[10px] text-text-muted mt-1 uppercase tracking-widest">Receive 7 AI memes daily & budget alerts even when closed.</p>
+            <p className="text-[10px] text-text-muted mt-1 uppercase tracking-widest">Receive 12 AI memes daily & budget alerts even closed.</p>
           </div>
           <button
             type="button"
-            onClick={async () => {
-              try {
-                const permission = await Notification.requestPermission();
-                if (permission !== "granted") {
-                  toast.error("Permission denied");
-                  return;
-                }
-                const registration = await navigator.serviceWorker.register('/sw.js');
-                
-                const applicationServerKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-                const subscription = await registration.pushManager.subscribe({
-                  userVisibleOnly: true,
-                  applicationServerKey: applicationServerKey
-                });
-
-                const res = await fetch('/api/push/subscribe', {
-                  method: 'POST',
-                  body: JSON.stringify(subscription),
-                  headers: { 'Content-Type': 'application/json' }
-                });
-
-                if (res.ok) {
-                  toast.success("Web Push fully enabled!");
-                } else {
-                  toast.error("Failed to save push subscription");
-                }
-              } catch (e) {
-                console.error(e);
-                toast.error("Web Push not supported or blocked");
-              }
-            }}
-            className="text-[10px] font-bold uppercase tracking-widest text-bg bg-primary px-4 py-2 hover:opacity-90 transition-opacity rounded-full ml-4 whitespace-nowrap"
+            onClick={togglePush}
+            className={`text-[10px] font-bold uppercase tracking-widest px-4 py-2 hover:opacity-90 transition-opacity rounded-full ml-4 whitespace-nowrap ${
+              isPushEnabled ? 'bg-border text-text-primary' : 'bg-primary text-bg'
+            }`}
           >
-            Enable Push
+            {isPushEnabled ? "Disable Push" : "Enable Push"}
           </button>
         </div>
       </div>
