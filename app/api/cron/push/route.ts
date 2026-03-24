@@ -136,8 +136,10 @@ export async function GET(req: Request) {
           },
         };
         try {
-          await webpush.sendNotification(subscription, payload);
+          await webpush.sendNotification(subscription, payload, { TTL: 3600 });
+          console.log(`[PUSH_SENT] Successfully sent to ${sub.endpoint.slice(0, 50)}...`);
         } catch (pushError: any) {
+          console.error(`[PUSH_ERROR] Status: ${pushError.statusCode}, Body: ${pushError.body}, Endpoint: ${sub.endpoint.slice(0, 50)}`);
           if (pushError.statusCode === 404 || pushError.statusCode === 410) {
             await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, sub.endpoint));
           }
