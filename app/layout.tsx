@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "sonner";
+import SmoothScroll from "@/components/SmoothScroll";
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -27,7 +28,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <ClerkProvider>
       <html lang="en" className="dark">
         <body>
-          {children}
+          <SmoothScroll>
+            {children}
+          </SmoothScroll>
           <Toaster
             position="top-right"
             toastOptions={{
