@@ -6,6 +6,7 @@ import "./globals.css";
 
 export const viewport: Viewport = {
   themeColor: "#000000",
+  viewportFit: "cover",
 };
 
 export const metadata: Metadata = {
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "Trackr",
   },
   icons: {

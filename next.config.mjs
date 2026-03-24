@@ -5,8 +5,8 @@ const withPWA = withPWAInit({
   disable: process.env.NODE_ENV === "development",
   register: true,
   skipWaiting: true,
-  cacheOnFrontEndNav: false,
-  aggressiveFrontEndNavCaching: false,
+  cacheOnFrontEndNav: true,
+  aggressiveFrontEndNavCaching: true,
   workboxOptions: {
     disableDevLogs: true,
     exclude: [
@@ -36,19 +36,39 @@ const withPWA = withPWAInit({
       },
       {
         urlPattern: /\/dashboard\/?.*/i,
-        handler: 'NetworkOnly',
+        handler: 'NetworkFirst',
+        options: {
+          cacheName: 'pages-cache',
+          expiration: { maxEntries: 50, maxAgeSeconds: 30 * 24 * 60 * 60 },
+          networkTimeoutSeconds: 3,
+        },
       },
       {
         urlPattern: /\/settings\/?.*/i,
-        handler: 'NetworkOnly',
+        handler: 'NetworkFirst',
+        options: {
+          cacheName: 'pages-cache',
+          expiration: { maxEntries: 50, maxAgeSeconds: 30 * 24 * 60 * 60 },
+          networkTimeoutSeconds: 3,
+        },
       },
       {
         urlPattern: /\/add\/?.*/i,
-        handler: 'NetworkOnly',
+        handler: 'NetworkFirst',
+        options: {
+          cacheName: 'pages-cache',
+          expiration: { maxEntries: 50, maxAgeSeconds: 30 * 24 * 60 * 60 },
+          networkTimeoutSeconds: 3,
+        },
       },
       {
         urlPattern: /\/expenses\/?.*/i,
-        handler: 'NetworkOnly',
+        handler: 'NetworkFirst',
+        options: {
+          cacheName: 'pages-cache',
+          expiration: { maxEntries: 50, maxAgeSeconds: 30 * 24 * 60 * 60 },
+          networkTimeoutSeconds: 3,
+        },
       },
       {
         urlPattern: /\/_next\/static\//,
