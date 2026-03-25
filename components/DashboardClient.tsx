@@ -17,6 +17,7 @@ import SettingsForm from "@/components/SettingsForm";
 import AddExpenseForm from "@/components/AddExpenseForm";
 import SipManager from "@/components/SipManager";
 import GoalsManager from "@/components/GoalsManager";
+import DebtsSection from "@/components/DebtsSection";
 import { Expense, RecurringExpense, Goal } from "@/lib/schema";
 
 interface DashboardClientProps {
@@ -240,6 +241,9 @@ export default function DashboardClient({
                 </p>
               </div>
             </div>
+
+            {/* Debts & IOUs Section */}
+            <DebtsSection />
 
             <BudgetCard totalBudget={totalBudget} totalSpent={totalSpent} />
             

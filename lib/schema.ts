@@ -106,6 +106,20 @@ export const pushSubscriptions = pgTable("push_subscriptions", {
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 
+export const debts = pgTable("debts", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  personName: text("person_name").notNull(),
+  amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
+  type: text("type").notNull(),
+  status: text("status").default("pending").notNull(),
+  paymentMethod: text("payment_method").default("online").notNull(),
+  dueDate: date("due_date"),
+  createdAt: timestamp("created_at").default(sql`now()`),
+});
+
 export type User = typeof users.$inferSelect;
 export type UserCategory = typeof userCategories.$inferSelect;
 export type Expense = typeof expenses.$inferSelect;
@@ -115,9 +129,11 @@ export type RecurringExpense = typeof recurringExpenses.$inferSelect;
 export type Goal = typeof goals.$inferSelect;
 export type Recharge = typeof recharges.$inferSelect;
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+export type Debt = typeof debts.$inferSelect;
 
 export type NewExpense = typeof expenses.$inferInsert;
 export type NewIncome = typeof incomes.$inferInsert;
 export type NewGoal = typeof goals.$inferInsert;
 export type NewRecharge = typeof recharges.$inferInsert;
 export type NewPushSubscription = typeof pushSubscriptions.$inferInsert;
+export type NewDebt = typeof debts.$inferInsert;
