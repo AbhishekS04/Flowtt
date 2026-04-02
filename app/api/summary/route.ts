@@ -8,8 +8,16 @@ import { getMonthString } from "@/lib/utils";
 async function getOrCreateUser(clerkUserId: string) {
   const existing = await db.select().from(users).where(eq(users.clerkUserId, clerkUserId)).limit(1);
   if (existing.length > 0) return existing[0];
-  const created = await db.insert(users).values({ clerkUserId }).returning();
-  return created[0];
+  try {
+    const created = await db.insert(users).values({ clerkUserId }).returning();
+    return created[0];
+  } catch (error: any) {
+    if (error.code === '23505' || (error.message && error.message.includes('unique constraint'))) {
+      const retry = await db.select().from(users).where(eq(users.clerkUserId, clerkUserId)).limit(1);
+      return retry[0];
+    }
+    throw error;
+  }
 }
 
 export async function GET(request: Request) {

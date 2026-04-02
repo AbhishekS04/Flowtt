@@ -46,6 +46,8 @@ export default function SettingsForm({ initialBudget, initialCash, initialOnline
 
   const [isPushEnabled, setIsPushEnabled] = useState(false);
   const [isAppLockEnabled, setIsAppLockEnabled] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   useEffect(() => {
     setIsAppLockEnabled(isBiometricLockEnabled());
@@ -267,6 +269,26 @@ export default function SettingsForm({ initialBudget, initialCash, initialOnline
     }
   };
 
+  const resetBalancesToZero = async () => {
+    setIsResetting(true);
+    try {
+      const res = await fetch("/api/balances/reset", { method: "POST" });
+      if (res.ok) {
+        toast.success("Both balances have been reset to ₹0.00");
+        setCashBalance("0");
+        setOnlineBalance("0");
+        router.refresh();
+      } else {
+        toast.error("Failed to reset balances");
+      }
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setIsResetting(false);
+      setShowResetModal(false);
+    }
+  };
+
   const sectionClass = "border-t border-border py-8 group relative overflow-hidden";
   const inputClass =
     "bg-transparent border-b border-border text-text-primary px-0 py-2.5 text-lg focus:outline-none focus:border-primary transition-colors placeholder:text-text-muted/30 appearance-none rounded-none";
@@ -365,6 +387,19 @@ export default function SettingsForm({ initialBudget, initialCash, initialOnline
           </div>
           <button onClick={saveBalances} className={`${btnClass} w-full sm:w-auto h-full self-end`}>
             Save
+          </button>
+        </div>
+        <div className="mt-6 pt-5 border-t border-border flex items-center justify-between">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-red-400">Danger Zone</p>
+            <p className="text-[10px] text-text-muted mt-1 uppercase tracking-widest">Set cash & online balance to ₹0.00</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowResetModal(true)}
+            className="text-[10px] font-bold uppercase tracking-widest px-4 py-2.5 border border-red-500/50 text-red-400 hover:bg-red-500/10 transition-colors whitespace-nowrap"
+          >
+            Reset to Zero
           </button>
         </div>
       </div>
@@ -562,6 +597,38 @@ export default function SettingsForm({ initialBudget, initialCash, initialOnline
           </button>
         </div>
       </div>
+
+      {/* Reset Balance Confirmation Modal */}
+      {showResetModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.75)' }}>
+          <div className="bg-[#1a1a1a] border border-[#2a2a2a] p-8 max-w-sm w-full mx-4 shadow-2xl animate-fade-in">
+            <div className="mb-6">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-red-400 mb-3">⚠ Confirm Reset</p>
+              <h3 className="text-lg font-bold text-text-primary tracking-tight">Reset both balances to ₹0.00?</h3>
+              <p className="text-[11px] text-text-muted mt-2 leading-relaxed">
+                This will set your Cash and Online balance to exactly ₹0.00 right now.
+                Your transaction history will remain intact.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={resetBalancesToZero}
+                disabled={isResetting}
+                className="flex-1 bg-red-500 text-white font-bold py-2.5 text-[10px] uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed border-none"
+              >
+                {isResetting ? "Resetting..." : "OK, Reset"}
+              </button>
+              <button
+                onClick={() => setShowResetModal(false)}
+                disabled={isResetting}
+                className="flex-1 border border-border text-text-muted font-bold py-2.5 text-[10px] uppercase tracking-widest hover:text-text-primary hover:border-text-primary transition-colors bg-transparent disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

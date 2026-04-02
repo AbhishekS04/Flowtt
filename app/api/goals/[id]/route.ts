@@ -4,8 +4,9 @@ import { db } from "@/lib/db";
 import { goals, users } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const { userId: clerkUserId } = await auth();
     if (!clerkUserId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -17,7 +18,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
     const updated = await db.update(goals)
       .set({ currentAmount: currentAmount.toString() })
-      .where(and(eq(goals.id, params.id), eq(goals.userId, internalUserId)))
+      .where(and(eq(goals.id, id), eq(goals.userId, internalUserId)))
       .returning();
 
     return NextResponse.json(updated[0]);
@@ -27,8 +28,9 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const { userId: clerkUserId } = await auth();
     if (!clerkUserId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -36,7 +38,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     if (!userRecord.length) return NextResponse.json({ error: "User not found" }, { status: 404 });
     const internalUserId = userRecord[0].id;
 
-    await db.delete(goals).where(and(eq(goals.id, params.id), eq(goals.userId, internalUserId)));
+    await db.delete(goals).where(and(eq(goals.id, id), eq(goals.userId, internalUserId)));
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Goals DELETE error:", error);

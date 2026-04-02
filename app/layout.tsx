@@ -30,6 +30,23 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <ClerkProvider>
       <html lang="en" className="dark">
         <body>
+          {/* Unregister any stale service workers (e.g. old Clerk v5 cached chunks) */}
+          <script dangerouslySetInnerHTML={{ __html: `
+            if ('serviceWorker' in navigator) {
+              navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for (let registration of registrations) {
+                  registration.unregister();
+                  console.log('[Layout] Unregistered SW:', registration.scope);
+                }
+              });
+              caches.keys().then(function(names) {
+                for (let name of names) {
+                  caches.delete(name);
+                  console.log('[Layout] Deleted cache:', name);
+                }
+              });
+            }
+          ` }} />
           <AppLockWrapper>
             <SmoothScroll>
               {children}
@@ -50,3 +67,4 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </ClerkProvider>
   );
 }
+

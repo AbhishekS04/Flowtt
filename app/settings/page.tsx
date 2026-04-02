@@ -13,8 +13,16 @@ export default async function SettingsPage() {
 
   let user = await db.select().from(users).where(eq(users.clerkUserId, userId)).limit(1).then((r) => r[0]);
   if (!user) {
-    const created = await db.insert(users).values({ clerkUserId: userId }).returning();
-    user = created[0];
+    try {
+      const created = await db.insert(users).values({ clerkUserId: userId }).returning();
+      user = created[0];
+    } catch (error: any) {
+      if (error.code === '23505' || (error.message && error.message.includes('unique constraint'))) {
+        user = await db.select().from(users).where(eq(users.clerkUserId, userId)).limit(1).then((r) => r[0]);
+      } else {
+        throw error;
+      }
+    }
   }
 
   const month = getMonthString();

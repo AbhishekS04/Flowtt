@@ -22,10 +22,22 @@ export async function POST(request: Request) {
       .returning();
     return NextResponse.json(updated[0]);
   } else {
-    const created = await db
-      .insert(users)
-      .values({ clerkUserId: userId, monthlyBudget: String(monthlyBudget) })
-      .returning();
-    return NextResponse.json(created[0], { status: 201 });
+    try {
+      const created = await db
+        .insert(users)
+        .values({ clerkUserId: userId, monthlyBudget: String(monthlyBudget) })
+        .returning();
+      return NextResponse.json(created[0], { status: 201 });
+    } catch (error: any) {
+      if (error.code === '23505' || (error.message && error.message.includes('unique constraint'))) {
+        const updated = await db
+          .update(users)
+          .set({ monthlyBudget: String(monthlyBudget) })
+          .where(eq(users.clerkUserId, userId))
+          .returning();
+        return NextResponse.json(updated[0]);
+      }
+      throw error;
+    }
   }
 }

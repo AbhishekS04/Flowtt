@@ -55,11 +55,10 @@ export async function GET(req: Request) {
       usersSubsMap.get(sub.clerkUserId)!.push(sub);
     }
 
-    const clerk = clerkClient();
-
     const processPromises = Array.from(usersSubsMap.entries()).map(async ([clerkUserId, userEndpoints]) => {
       let firstName = "there";
       try {
+        const clerk = await clerkClient();
         const clerkUser = await clerk.users.getUser(clerkUserId);
         if (clerkUser && clerkUser.firstName) {
           firstName = clerkUser.firstName;
@@ -68,15 +67,28 @@ export async function GET(req: Request) {
         console.error("Could not fetch user name for", clerkUserId);
       }
 
+      // Sanitize user input to prevent prompt injection
+      // Remove any characters that could break out of the prompt context
+      const sanitizeForPrompt = (input: string): string => {
+        return input
+          .replace(/[\r\n\t]/g, ' ')  // Remove newlines and tabs
+          .replace(/["'`$<>{}()]/g, '') // Remove prompt-breaking characters
+          .replace(/\s+/g, ' ')  // Normalize whitespace
+          .trim()
+          .slice(0, 50); // Limit length
+      };
+      
+      const safeName = sanitizeForPrompt(firstName);
+
       let prompt = "";
       let jokeText = "";
 
       if (type === "reminder") {
-        prompt = `You are a savage, witty budgeting app notification system. The user's name is ${firstName}. It is 7:00 PM. Give me one very short (max 1 sentence) funny notification reminding ${firstName} to log their expenses for the day. Be aggressive but funny. Use their name. No quotes.`;
-        jokeText = `Hey ${firstName}, it's 7 PM. Log your expenses today or I will judge you.`;
+        prompt = `You are a savage, witty budgeting app notification system. The user's name is USER_NAME. It is 7:00 PM. Give me one very short (max 1 sentence) funny notification reminding USER_NAME to log their expenses for the day. Be aggressive but funny. Use their name. No quotes.`;
+        jokeText = `Hey ${safeName}, it's 7 PM. Log your expenses today or I will judge you.`;
       } else {
-        prompt = `You are a savage, witty budgeting app notification system. The user's name is ${firstName}. Give me one very short (max 1 sentence, under 80 characters) funny meme notification roasting ${firstName} about their spending habits. Use their name. No quotes.`;
-        jokeText = `Hey ${firstName}, did you log your expenses today? Don't make me look at your bank account.`;
+        prompt = `You are a savage, witty budgeting app notification system. The user's name is USER_NAME. Give me one very short (max 1 sentence, under 80 characters) funny meme notification roasting USER_NAME about their spending habits. Use their name. No quotes.`;
+        jokeText = `Hey ${safeName}, did you log your expenses today? Don't make me look at your bank account.`;
       }
       let modelsToTry = process.env.GEMINI_MODEL ? [process.env.GEMINI_MODEL, ...FALLBACK_MODELS] : [...FALLBACK_MODELS];
       let aiResponded = false;

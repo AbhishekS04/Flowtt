@@ -9,7 +9,8 @@ async function getUser(clerkUserId: string) {
   return result[0] ?? null;
 }
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -28,20 +29,21 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       ...(note !== undefined && { note }),
       ...(paymentMethod !== undefined && { paymentMethod }),
     })
-    .where(and(eq(incomes.id, params.id), eq(incomes.userId, user.id)))
+    .where(and(eq(incomes.id, id), eq(incomes.userId, user.id)))
     .returning();
 
   if (!updated.length) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(updated[0]);
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const user = await getUser(userId);
   if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
-  await db.delete(incomes).where(and(eq(incomes.id, params.id), eq(incomes.userId, user.id)));
+  await db.delete(incomes).where(and(eq(incomes.id, id), eq(incomes.userId, user.id)));
   return NextResponse.json({ success: true });
 }

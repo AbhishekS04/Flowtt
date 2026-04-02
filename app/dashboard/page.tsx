@@ -13,8 +13,17 @@ async function getOrCreateUser(clerkUserId: string) {
   if (existing.length > 0) {
     user = existing[0];
   } else {
-    const created = await db.insert(users).values({ clerkUserId }).returning();
-    user = created[0];
+    try {
+      const created = await db.insert(users).values({ clerkUserId }).returning();
+      user = created[0];
+    } catch (error: any) {
+      if (error.code === '23505' || (error.message && error.message.includes('unique constraint'))) {
+        const retry = await db.select().from(users).where(eq(users.clerkUserId, clerkUserId)).limit(1);
+        user = retry[0];
+      } else {
+        throw error;
+      }
+    }
   }
 
   // Seed default categories if none exist

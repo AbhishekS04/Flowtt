@@ -4,8 +4,9 @@ import { db } from "@/lib/db";
 import { userCategories, users } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const { userId } = await auth();
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -13,7 +14,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     if (!user.length) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
     await db.delete(userCategories).where(
-      and(eq(userCategories.id, params.id), eq(userCategories.userId, user[0].id))
+      and(eq(userCategories.id, id), eq(userCategories.userId, user[0].id))
     );
 
     return NextResponse.json({ success: true });
@@ -23,8 +24,9 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
   }
 }
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const { userId } = await auth();
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -40,7 +42,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         ...(name && { name: name.toLowerCase() }),
         ...(icon && { icon }),
       })
-      .where(and(eq(userCategories.id, params.id), eq(userCategories.userId, user[0].id)))
+      .where(and(eq(userCategories.id, id), eq(userCategories.userId, user[0].id)))
       .returning();
 
     return NextResponse.json(updated[0]);

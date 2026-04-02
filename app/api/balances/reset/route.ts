@@ -19,51 +19,50 @@ async function getOrCreateUser(clerkUserId: string) {
   }
 }
 
-export async function GET(request: Request) {
+export async function POST() {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const user = await getOrCreateUser(userId);
 
-  const allExpenses = await db.select({ amount: expenses.amount, paymentMethod: expenses.paymentMethod }).from(expenses).where(eq(expenses.userId, user.id));
-  const allIncomes = await db.select({ amount: incomes.amount, paymentMethod: incomes.paymentMethod }).from(incomes).where(eq(incomes.userId, user.id));
+  const allExpenses = await db
+    .select({ amount: expenses.amount, paymentMethod: expenses.paymentMethod })
+    .from(expenses)
+    .where(eq(expenses.userId, user.id));
+
+  const allIncomes = await db
+    .select({ amount: incomes.amount, paymentMethod: incomes.paymentMethod })
+    .from(incomes)
+    .where(eq(incomes.userId, user.id));
 
   let cashExpenses = 0;
   let onlineExpenses = 0;
   for (const e of allExpenses) {
-    if (e.paymentMethod === 'cash') cashExpenses += parseFloat(e.amount);
+    if (e.paymentMethod === "cash") cashExpenses += parseFloat(e.amount);
     else onlineExpenses += parseFloat(e.amount);
   }
 
   let cashIncomes = 0;
   let onlineIncomes = 0;
   for (const i of allIncomes) {
-    if (i.paymentMethod === 'cash') cashIncomes += parseFloat(i.amount);
+    if (i.paymentMethod === "cash") cashIncomes += parseFloat(i.amount);
     else onlineIncomes += parseFloat(i.amount);
   }
 
-  const cash = parseFloat(user.initialCashBalance || "0") + cashIncomes - cashExpenses;
-  const online = parseFloat(user.initialOnlineBalance || "0") + onlineIncomes - onlineExpenses;
-
-  return NextResponse.json({ cash, online });
-}
-
-export async function PATCH(request: Request) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const user = await getOrCreateUser(userId);
-  const body = await request.json();
-  const { initialCashBalance, initialOnlineBalance } = body;
+  // To make balance = 0:
+  // balance = initialBalance + incomes - expenses = 0
+  // => initialBalance = expenses - incomes
+  const newCashInitial = cashExpenses - cashIncomes;
+  const newOnlineInitial = onlineExpenses - onlineIncomes;
 
   const updated = await db
     .update(users)
     .set({
-      ...(initialCashBalance !== undefined && { initialCashBalance: String(initialCashBalance) }),
-      ...(initialOnlineBalance !== undefined && { initialOnlineBalance: String(initialOnlineBalance) }),
+      initialCashBalance: String(newCashInitial),
+      initialOnlineBalance: String(newOnlineInitial),
     })
     .where(eq(users.id, user.id))
     .returning();
 
-  return NextResponse.json(updated[0]);
+  return NextResponse.json({ success: true, user: updated[0] });
 }

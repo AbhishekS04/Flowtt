@@ -19,8 +19,7 @@ export async function GET(req: NextRequest) {
       {
         status: "error",
         message: "Database connection failed",
-        error: error instanceof Error ? error.message : String(error),
-        databaseUrl: process.env.DATABASE_URL?.substring(0, 50) + "...",
+        // Security: Don't expose internal error details or database URL
       },
       { status: 500 }
     );

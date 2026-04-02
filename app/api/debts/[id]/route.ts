@@ -4,8 +4,9 @@ import { db } from "@/lib/db";
 import { debts, expenses, incomes, users } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const { userId: clerkUserId } = await auth();
     if (!clerkUserId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -14,7 +15,6 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     });
     if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
-    const { id } = params;
     const body = await req.json();
     const { action } = body; // 'settle' or 'cancel'
 
@@ -42,7 +42,6 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       const today = (new Date(Date.now() - tzOffset)).toISOString().split("T")[0];
 
       if (debt.type === 'lent') {
-        // You lent money, now you are getting it back -> Income
         await db.insert(incomes).values({
           userId: user.id,
           amount: debt.amount,
@@ -51,11 +50,10 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
           paymentMethod: debt.paymentMethod,
         });
       } else if (debt.type === 'borrowed') {
-        // You borrowed money, now you are paying it back -> Expense
         await db.insert(expenses).values({
           userId: user.id,
           amount: debt.amount,
-          category: "Debt ✨", // Using a nice category name with emoji that might work without an icon
+          category: "Debt ✨",
           date: today,
           note: `Settled Debt to ${debt.personName}`,
           paymentMethod: debt.paymentMethod,
