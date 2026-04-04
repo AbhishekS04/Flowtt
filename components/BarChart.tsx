@@ -102,3 +102,5 @@ export default function DailyBarChart({ dailyTotals, month }: DailyBarChartProps
     </div>
   );
 }
+
+
