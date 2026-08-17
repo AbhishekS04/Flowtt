@@ -43,6 +43,13 @@
       "when": 1774278804286,
       "tag": "0005_bouncy_xorn",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1786995856945,
+      "tag": "0006_luxuriant_silver_samurai",
+      "breakpoints": true
     }
   ]
 }

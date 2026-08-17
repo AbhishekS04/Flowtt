@@ -38,3 +38,6 @@ yarn-error.log*
 *.tsbuildinfo
 # next-env.d.ts # Usually better to keep this to avoid TS errors in CI
 
+
+# clerk configuration (can include secrets)
+/.clerk/
