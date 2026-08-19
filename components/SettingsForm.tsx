@@ -16,7 +16,7 @@ interface SettingsFormProps {
   initialCash: number;
   initialOnline: number;
   initialCategoryBudgets: Array<{ category: string; limitAmount: string }>;
-  categories: { id: string; name: string; icon: string }[];
+  categories: { id: string; name: string; icon: string; dailyBudget?: string | number | null }[];
   initialRecharge: any;
 }
 
@@ -99,6 +99,28 @@ export default function SettingsForm({ initialBudget, initialCash, initialOnline
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ initialCashBalance: cash, initialOnlineBalance: online }),
     }).then(() => router.refresh());
+  };
+
+  const [dailyBudgets, setDailyBudgets] = useState<Record<string, string>>(() => {
+    const dBudgets: Record<string, string> = {};
+    for (const c of categories) {
+      if (c.dailyBudget) dBudgets[c.name] = String(c.dailyBudget);
+    }
+    return dBudgets;
+  });
+
+  const saveDailyBudgets = async () => {
+    toast.success("Daily category budgets saved");
+    try {
+      await fetch("/api/categories", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dailyBudgets }),
+      });
+      router.refresh();
+    } catch {
+      toast.error("Failed to save daily budgets");
+    }
   };
 
   const saveCategoryLimits = () => {
@@ -444,6 +466,46 @@ export default function SettingsForm({ initialBudget, initialCash, initialOnline
           className={`${btnClass} mt-10 w-full sm:w-auto`}
         >
           Save Allocations
+        </button>
+      </div>
+
+      {/* Daily Category Budgets (Food, Transport & Daily Limits) */}
+      <div className={sectionClass}>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="font-bold text-text-primary text-lg tracking-tighter">Daily Category Budgets</h2>
+          <span className="text-[9px] font-black uppercase tracking-widest text-primary bg-primary/10 px-2.5 py-1 rounded-full border border-primary/20">
+            Per-Day Limit
+          </span>
+        </div>
+        <p className="text-[10px] uppercase font-bold tracking-widest text-text-muted mb-8">
+          Set daily spending allowances for Food 🍔, Transport 🚗, and more.
+        </p>
+        <div className="space-y-6">
+          {categories.map((cat) => (
+            <div key={`daily-${cat.id}`} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 group/cat focus-within:text-primary">
+              <span className="sm:w-36 text-[10px] font-bold tracking-widest uppercase transition-colors">{cat.icon} {cat.name}</span>
+              <div className="relative flex-1 max-w-sm">
+                <span className="absolute left-0 bottom-3 text-text-muted pointer-events-none text-lg">₹</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="10"
+                  value={dailyBudgets[cat.name] || ""}
+                  onChange={(e) =>
+                    setDailyBudgets((p) => ({ ...p, [cat.name]: e.target.value }))
+                  }
+                  className={`${inputClass} pl-6 w-full font-bold`}
+                  placeholder={cat.name.toLowerCase() === "food" ? "e.g. 150/day" : cat.name.toLowerCase() === "transport" ? "e.g. 60/day" : "No daily limit"}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+        <button
+          onClick={saveDailyBudgets}
+          className={`${btnClass} mt-10 w-full sm:w-auto`}
+        >
+          Save Daily Category Budgets
         </button>
       </div>
 

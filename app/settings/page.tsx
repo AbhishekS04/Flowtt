@@ -32,7 +32,12 @@ export default async function SettingsPage() {
     .where(and(eq(categoryBudgets.userId, user.id), eq(categoryBudgets.month, month)));
 
   const categories = await db
-    .select({ id: userCategories.id, name: userCategories.name, icon: userCategories.icon })
+    .select({
+      id: userCategories.id,
+      name: userCategories.name,
+      icon: userCategories.icon,
+      dailyBudget: userCategories.dailyBudget,
+    })
     .from(userCategories)
     .where(eq(userCategories.userId, user.id));
 

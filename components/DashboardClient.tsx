@@ -35,7 +35,7 @@ interface DashboardClientProps {
   recentExpenses: any[];
   allExpenses: any[];
   catBudgets: any[];
-  categories: { id: string; name: string; icon: string }[];
+  categories: { id: string; name: string; icon: string; dailyBudget?: string | number | null }[];
   sips: RecurringExpense[];
   goals: Goal[];
   recharges: any[];
@@ -78,6 +78,18 @@ export default function DashboardClient({
   const todayDateStr = (new Date(Date.now() - tzOffset)).toISOString().split("T")[0];
   const todaySpend = dailyTotals[todayDateStr] || 0;
   const todayTransactionsCount = allExpenses.filter(e => e.date === todayDateStr).length;
+
+  const todayCategorySpent: Record<string, number> = {};
+  for (const e of allExpenses) {
+    if (e.date === todayDateStr && (e.type === "expense" || !e.type)) {
+      const catKey = (e.category || "other").toLowerCase();
+      todayCategorySpent[catKey] = (todayCategorySpent[catKey] || 0) + parseFloat(e.amount || 0);
+    }
+  }
+
+  const categoriesWithDailyBudget = categories.filter(
+    (c: any) => c.dailyBudget && parseFloat(c.dailyBudget as any) > 0
+  );
 
   const [yr, mn] = month.split("-").map(Number);
   const daysInMonth = new Date(yr, mn, 0).getDate();
@@ -356,6 +368,71 @@ export default function DashboardClient({
 
             <BudgetCard totalBudget={totalBudget} totalSpent={totalSpent} />
             
+            {/* Daily Category Budgets (Food, Transport & Daily Limits) */}
+            {categoriesWithDailyBudget.length > 0 && (
+              <div className="bg-card border border-border p-6 sm:p-8 rounded-3xl shadow-sm space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                      <h2 className="text-[10px] font-black text-text-muted uppercase tracking-[0.25em]">
+                        Today's Category Daily Budgets
+                      </h2>
+                    </div>
+                    <p className="text-xs text-text-muted mt-0.5">
+                      Daily allowances for your essential daily expenses.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab("settings")}
+                    className="text-[9px] font-black uppercase tracking-widest text-text-muted hover:text-text-primary border border-border px-3 py-1 rounded-full"
+                  >
+                    Edit Limits
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {categoriesWithDailyBudget.map((cat) => {
+                    const dailyLimit = parseFloat(cat.dailyBudget as any || 0);
+                    const spentToday = todayCategorySpent[cat.name.toLowerCase()] || 0;
+                    const remainingToday = dailyLimit - spentToday;
+                    const pct = Math.min(100, Math.round((spentToday / dailyLimit) * 100));
+
+                    return (
+                      <div key={`db-${cat.id}`} className="bg-text-primary/5 border border-border/60 rounded-2xl p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2.5">
+                            <span className="text-xl">{cat.icon}</span>
+                            <div>
+                              <p className="text-xs font-black uppercase tracking-widest text-text-primary">{cat.name}</p>
+                              <p className="text-[10px] text-text-muted font-bold">
+                                Spent ₹{spentToday.toFixed(2)} of ₹{dailyLimit.toFixed(2)}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className={`text-xs font-black ${remainingToday < 0 ? "text-red-500" : "text-green-500"}`}>
+                              {remainingToday < 0 ? `-₹${Math.abs(remainingToday).toFixed(2)} Over` : `₹${remainingToday.toFixed(2)} Left`}
+                            </p>
+                            <span className="text-[8px] font-bold uppercase text-text-muted">{pct}% Used</span>
+                          </div>
+                        </div>
+
+                        <div className="w-full bg-border/40 rounded-full h-1.5 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-700 ${
+                              pct >= 100 ? "bg-red-500" : pct >= 80 ? "bg-amber-500" : "bg-text-primary"
+                            }`}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <CategoryBudgetsCard 
               categoryLimits={categoryLimits} 
               categoryBreakdown={categoryBreakdown} 

@@ -34,14 +34,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (!user.length) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
     const body = await req.json();
-    const { name, icon } = body;
+    const { name, icon, dailyBudget } = body;
+
+    const updateFields: Record<string, any> = {};
+    if (name) updateFields.name = name.toLowerCase();
+    if (icon) updateFields.icon = icon;
+    if (dailyBudget !== undefined) {
+      updateFields.dailyBudget = dailyBudget !== null && dailyBudget !== "" ? dailyBudget.toString() : null;
+    }
 
     const updated = await db
       .update(userCategories)
-      .set({
-        ...(name && { name: name.toLowerCase() }),
-        ...(icon && { icon }),
-      })
+      .set(updateFields)
       .where(and(eq(userCategories.id, id), eq(userCategories.userId, user[0].id)))
       .returning();
 

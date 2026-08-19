@@ -551,10 +551,17 @@ export default function ExpenseTable({ initialExpenses, categories }: ExpenseTab
                     <div className="min-w-0">
                       <p className="text-[7px] sm:text-[8px] font-black uppercase tracking-widest text-text-muted">Cash</p>
                       <p className="text-[11px] sm:text-xs font-black text-text-primary truncate">
-                        {group.cashSpent > 0 && <span className="text-red-500">-{formatCurrency(group.cashSpent)}</span>}
-                        {group.cashSpent > 0 && group.cashIncome > 0 && <span>/</span>}
-                        {group.cashIncome > 0 && <span className="text-green-500">+{formatCurrency(group.cashIncome)}</span>}
-                        {group.cashSpent === 0 && group.cashIncome === 0 && <span className="text-text-muted">₹0</span>}
+                        {group.cashIncome > 0 && group.cashSpent > 0 ? (
+                          <span className={group.cashNet < 0 ? "text-red-500 font-bold" : "text-green-500 font-bold"}>
+                            {group.cashNet < 0 ? `-${formatCurrency(Math.abs(group.cashNet))}` : `+${formatCurrency(group.cashNet)}`} Net
+                          </span>
+                        ) : group.cashSpent > 0 ? (
+                          <span className="text-red-500">-{formatCurrency(group.cashSpent)}</span>
+                        ) : group.cashIncome > 0 ? (
+                          <span className="text-green-500">+{formatCurrency(group.cashIncome)}</span>
+                        ) : (
+                          <span className="text-text-muted">₹0</span>
+                        )}
                       </p>
                     </div>
                   </div>
@@ -565,10 +572,17 @@ export default function ExpenseTable({ initialExpenses, categories }: ExpenseTab
                     <div className="min-w-0">
                       <p className="text-[7px] sm:text-[8px] font-black uppercase tracking-widest text-text-muted">Online</p>
                       <p className="text-[11px] sm:text-xs font-black text-text-primary truncate">
-                        {group.onlineSpent > 0 && <span className="text-red-500">-{formatCurrency(group.onlineSpent)}</span>}
-                        {group.onlineSpent > 0 && group.onlineIncome > 0 && <span>/</span>}
-                        {group.onlineIncome > 0 && <span className="text-green-500">+{formatCurrency(group.onlineIncome)}</span>}
-                        {group.onlineSpent === 0 && group.onlineIncome === 0 && <span className="text-text-muted">₹0</span>}
+                        {group.onlineIncome > 0 && group.onlineSpent > 0 ? (
+                          <span className={group.onlineNet < 0 ? "text-red-500 font-bold" : "text-green-500 font-bold"}>
+                            {group.onlineNet < 0 ? `-${formatCurrency(Math.abs(group.onlineNet))}` : `+${formatCurrency(group.onlineNet)}`} Net
+                          </span>
+                        ) : group.onlineSpent > 0 ? (
+                          <span className="text-red-500">-{formatCurrency(group.onlineSpent)}</span>
+                        ) : group.onlineIncome > 0 ? (
+                          <span className="text-green-500">+{formatCurrency(group.onlineIncome)}</span>
+                        ) : (
+                          <span className="text-text-muted">₹0</span>
+                        )}
                       </p>
                     </div>
                   </div>
@@ -601,8 +615,23 @@ export default function ExpenseTable({ initialExpenses, categories }: ExpenseTab
                         Cash ({group.cashTransactions.length})
                       </h4>
                     </div>
-                    <span className="text-[10px] font-black text-text-muted">
-                      {group.cashSpent > 0 ? `-${formatCurrency(group.cashSpent)}` : "₹0.00"}
+                    <span className="text-[10px] font-black text-text-primary">
+                      {group.cashIncome > 0 && group.cashSpent > 0 ? (
+                        <span>
+                          <span className={group.cashNet < 0 ? "text-red-500 font-black" : "text-green-500 font-black"}>
+                            {group.cashNet < 0 ? `-${formatCurrency(Math.abs(group.cashNet))}` : `+${formatCurrency(group.cashNet)}`} Net
+                          </span>{" "}
+                          <span className="text-[8px] text-text-muted font-normal">
+                            (-{formatCurrency(group.cashSpent)} +{formatCurrency(group.cashIncome)})
+                          </span>
+                        </span>
+                      ) : group.cashSpent > 0 ? (
+                        <span className="text-red-500 font-black">-{formatCurrency(group.cashSpent)}</span>
+                      ) : group.cashIncome > 0 ? (
+                        <span className="text-green-500 font-black">+{formatCurrency(group.cashIncome)}</span>
+                      ) : (
+                        <span className="text-text-muted">₹0.00</span>
+                      )}
                     </span>
                   </div>
 
@@ -626,8 +655,23 @@ export default function ExpenseTable({ initialExpenses, categories }: ExpenseTab
                         Online / UPI ({group.onlineTransactions.length})
                       </h4>
                     </div>
-                    <span className="text-[10px] font-black text-text-muted">
-                      {group.onlineSpent > 0 ? `-${formatCurrency(group.onlineSpent)}` : "₹0.00"}
+                    <span className="text-[10px] font-black text-text-primary">
+                      {group.onlineIncome > 0 && group.onlineSpent > 0 ? (
+                        <span>
+                          <span className={group.onlineNet < 0 ? "text-red-500 font-black" : "text-green-500 font-black"}>
+                            {group.onlineNet < 0 ? `-${formatCurrency(Math.abs(group.onlineNet))}` : `+${formatCurrency(group.onlineNet)}`} Net
+                          </span>{" "}
+                          <span className="text-[8px] text-text-muted font-normal">
+                            (-{formatCurrency(group.onlineSpent)} +{formatCurrency(group.onlineIncome)})
+                          </span>
+                        </span>
+                      ) : group.onlineSpent > 0 ? (
+                        <span className="text-red-500 font-black">-{formatCurrency(group.onlineSpent)}</span>
+                      ) : group.onlineIncome > 0 ? (
+                        <span className="text-green-500 font-black">+{formatCurrency(group.onlineIncome)}</span>
+                      ) : (
+                        <span className="text-text-muted">₹0.00</span>
+                      )}
                     </span>
                   </div>
 

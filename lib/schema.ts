@@ -17,6 +17,7 @@ export const userCategories = pgTable("user_categories", {
     .references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   icon: text("icon").notNull(),
+  dailyBudget: numeric("daily_budget", { precision: 10, scale: 2 }),
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 
