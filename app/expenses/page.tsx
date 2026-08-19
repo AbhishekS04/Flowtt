@@ -49,14 +49,16 @@ export default async function ExpensesPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#0f0f0f]">
+    <div className="min-h-screen bg-bg">
       <Navbar />
-      <main className="max-w-6xl mx-auto px-4 py-6 pb-20 md:pb-6">
-        <div className="mb-6">
-          <h1 className="text-xl font-semibold text-[#e5e5e5]">Expenses</h1>
-          <p className="text-sm text-[#a3a3a3] mt-1">Manage your spending history.</p>
+      <main className="max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-8 pb-28 md:pb-12">
+        <div className="mb-6 px-1">
+          <h1 className="text-2xl sm:text-3xl font-black text-text-primary tracking-tight">Expenses & Transactions</h1>
+          <p className="text-xs text-text-muted mt-1 font-medium">
+            Daily timeline, cash & online segregated feed, and full transaction history.
+          </p>
         </div>
-        <div className="bg-card border border-border rounded-3xl p-6 shadow-sm">
+        <div className="bg-card border border-border rounded-2xl sm:rounded-3xl p-4 sm:p-7 shadow-sm overflow-hidden">
           <ExpenseTable initialExpenses={initialTransactions} categories={categories} />
         </div>
       </main>
