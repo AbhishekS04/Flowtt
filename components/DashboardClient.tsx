@@ -142,8 +142,17 @@ export default function DashboardClient({
                 <div className="absolute top-0 right-0 p-4 md:p-6 opacity-100 md:opacity-100 transition-opacity z-0">
                   <span className="text-5xl md:text-6xl drop-shadow-sm">💵</span>
                 </div>
-                <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-1 relative z-10">Cash Balance</p>
-                <p className="text-3xl sm:text-4xl font-black tracking-tighter text-text-primary mb-2 relative z-10 break-all sm:break-normal">₹{cashBalance.toFixed(2)}</p>
+                <div className="flex items-center justify-between mb-1 relative z-10">
+                  <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em]">Cash Balance</p>
+                  {cashBalance < 0 && (
+                    <span className="text-[9px] font-black uppercase tracking-widest text-red-500 bg-red-500/10 px-2 py-0.5 rounded-full border border-red-500/20">
+                      Overdrawn
+                    </span>
+                  )}
+                </div>
+                <p className={`text-3xl sm:text-4xl font-black tracking-tighter mb-2 relative z-10 break-all sm:break-normal ${cashBalance < 0 ? "text-red-500" : "text-text-primary"}`}>
+                  {cashBalance < 0 ? `-₹${Math.abs(cashBalance).toFixed(2)}` : `₹${cashBalance.toFixed(2)}`}
+                </p>
                 <p className="text-xs text-text-muted font-bold tracking-widest uppercase relative z-10">
                   Spent this month: <span className="text-text-primary">₹{allExpenses.filter(e => e.paymentMethod === 'cash' && e.date && e.date.startsWith(month)).reduce((sum, e) => sum + parseFloat(e.amount), 0).toFixed(2)}</span>
                 </p>
@@ -152,8 +161,17 @@ export default function DashboardClient({
                 <div className="absolute top-0 right-0 p-4 md:p-6 opacity-100 md:opacity-100 transition-opacity z-0">
                   <span className="text-5xl md:text-6xl drop-shadow-sm">💳</span>
                 </div>
-                <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-1 relative z-10">Online Balance</p>
-                <p className="text-3xl sm:text-4xl font-black tracking-tighter text-text-primary mb-2 relative z-10 break-all sm:break-normal">₹{onlineBalance.toFixed(2)}</p>
+                <div className="flex items-center justify-between mb-1 relative z-10">
+                  <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em]">Online Balance</p>
+                  {onlineBalance < 0 && (
+                    <span className="text-[9px] font-black uppercase tracking-widest text-red-500 bg-red-500/10 px-2 py-0.5 rounded-full border border-red-500/20 animate-pulse">
+                      Overdrawn / Negative
+                    </span>
+                  )}
+                </div>
+                <p className={`text-3xl sm:text-4xl font-black tracking-tighter mb-2 relative z-10 break-all sm:break-normal ${onlineBalance < 0 ? "text-red-500" : "text-text-primary"}`}>
+                  {onlineBalance < 0 ? `-₹${Math.abs(onlineBalance).toFixed(2)}` : `₹${onlineBalance.toFixed(2)}`}
+                </p>
                 <p className="text-xs text-text-muted font-bold tracking-widest uppercase">
                   Spent this month: <span className="text-text-primary">₹{allExpenses.filter(e => e.paymentMethod === 'online' && e.date && e.date.startsWith(month)).reduce((sum, e) => sum + parseFloat(e.amount), 0).toFixed(2)}</span>
                 </p>
@@ -187,7 +205,7 @@ export default function DashboardClient({
               </div>
             )}
 
-            {/* Recharge Card */}
+            {/* Recharge & Subscription Card */}
             {activeRecharge ? (() => {
                const start = new Date(activeRecharge.startDate).getTime();
                const end = new Date(activeRecharge.endDate).getTime();
@@ -204,18 +222,25 @@ export default function DashboardClient({
                    <div className="absolute top-0 right-0 p-6 opacity-100 transition-opacity">
                      <span className="text-6xl drop-shadow-sm opacity-20">📱</span>
                    </div>
-                   <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-1 relative z-10">Active Plan</p>
+                   <div className="flex items-center justify-between mb-1 relative z-10">
+                     <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em]">Active Plan & Subscriptions</p>
+                     <span className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-text-primary/10 text-text-primary border border-border">
+                       ⚡ Autopay Enabled
+                     </span>
+                   </div>
                    <div className="mb-4 relative z-10">
                      <p className="text-3xl font-black tracking-tighter text-text-primary line-clamp-1">
                        {activeRecharge.name}
                      </p>
                      <p className="text-[10px] font-bold text-text-muted mt-1 uppercase tracking-widest">
-                       ₹{parseFloat(activeRecharge.amount).toFixed(2)} • {activeRecharge.validityDays} Days Validity
+                       ₹{parseFloat(activeRecharge.amount).toFixed(2)} • Auto-debits on billing date
                      </p>
                    </div>
                    <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-text-muted mb-2 relative z-10">
-                     <span className={remainingDays <= 3 ? "text-red-500" : ""}>{remainingDays} {remainingDays === 1 ? "Day" : "Days"} Left</span>
-                     <span>Ends {activeRecharge.endDate}</span>
+                     <span className={remainingDays <= 3 ? "text-red-500 font-bold" : ""}>
+                       {remainingDays === 0 ? "Due Today" : `${remainingDays} ${remainingDays === 1 ? "Day" : "Days"} Left`}
+                     </span>
+                     <span>Next Billing {activeRecharge.endDate}</span>
                    </div>
                    <div className="h-2 w-full bg-border rounded-full overflow-hidden relative z-10">
                      <div 
@@ -231,8 +256,8 @@ export default function DashboardClient({
                  onClick={() => setActiveTab("settings")}
                >
                  <span className="text-4xl opacity-50 mb-2">📱</span>
-                 <p className="text-sm font-bold text-text-primary">No Active Recharge</p>
-                 <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em]">Tap to track your plan</p>
+                 <p className="text-sm font-bold text-text-primary">No Active Subscription / Recharge</p>
+                 <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em]">Tap to track Apple Music / Mobile plan</p>
                </div>
             )}
 

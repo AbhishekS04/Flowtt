@@ -319,9 +319,17 @@ export default function SettingsForm({ initialBudget, initialCash, initialOnline
         </div>
       </div>
 
-      {/* Active Mobile/Internet Plan */}
+      {/* Active Mobile/Internet Plan & Subscription */}
       <div className={sectionClass}>
-        <h2 className="font-bold text-text-primary text-lg tracking-tighter mb-6">Active Pre-Paid Plan</h2>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="font-bold text-text-primary text-lg tracking-tighter">Active Plan & Subscription (Autopay)</h2>
+          <span className="text-[9px] font-black uppercase tracking-widest text-primary bg-primary/10 px-2.5 py-1 rounded-full border border-primary/20">
+            ⚡ Auto-Debit Active
+          </span>
+        </div>
+        <p className="text-[10px] text-text-muted uppercase tracking-widest mb-6">
+          Tracks Apple Music, Netflix, or phone plans. Automatically logs online expense and advances billing cycle on due date.
+        </p>
         <div className="flex flex-col sm:flex-row items-center gap-6 mb-4">
           <div className="relative w-full sm:flex-1 sm:max-w-xs focus-within:text-primary transition-colors">
             <span className="absolute left-0 bottom-3 text-text-muted pointer-events-none text-xs font-bold uppercase tracking-widest">Plan Name</span>
@@ -330,33 +338,33 @@ export default function SettingsForm({ initialBudget, initialCash, initialOnline
               value={rechargeName}
               onChange={(e) => setRechargeName(e.target.value)}
               className={`${inputClass} pl-24 w-full`}
-              placeholder="e.g. Jio 5G"
+              placeholder="e.g. Apple music"
             />
           </div>
           <div className="relative w-full sm:flex-1 sm:max-w-xs focus-within:text-primary transition-colors">
-            <span className="absolute left-0 bottom-3 text-text-muted pointer-events-none text-xs font-bold uppercase tracking-widest">Amount</span>
+            <span className="absolute left-0 bottom-3 text-text-muted pointer-events-none text-xs font-bold uppercase tracking-widest">Amount (₹)</span>
             <input
               type="number"
               value={rechargeAmount}
               onChange={(e) => setRechargeAmount(e.target.value)}
-              className={`${inputClass} pl-20 w-full`}
-              placeholder="299"
+              className={`${inputClass} pl-24 w-full`}
+              placeholder="59.00"
             />
           </div>
         </div>
         <div className="flex flex-col sm:flex-row items-end gap-6 relative z-10">
           <div className="relative w-full sm:max-w-xs focus-within:text-primary transition-colors">
-            <span className="absolute left-0 bottom-3 text-text-muted pointer-events-none text-xs font-bold uppercase tracking-widest bg-bg px-1 z-10">Due Date</span>
+            <span className="absolute left-0 bottom-3 text-text-muted pointer-events-none text-xs font-bold uppercase tracking-widest bg-bg px-1 z-10">Next Billing Date</span>
             <input
               type="date"
               value={rechargeEndDate}
               onChange={(e) => setRechargeEndDate(e.target.value)}
-              className={`${inputClass} pl-20 w-full text-sm block`}
+              className={`${inputClass} pl-36 w-full text-sm block`}
               style={{ colorScheme: "dark" }}
             />
           </div>
           <button onClick={saveRecharge} className={`${btnClass} w-full sm:w-auto h-full self-end`}>
-            Save Plan
+            Save Subscription / Plan
           </button>
         </div>
       </div>
