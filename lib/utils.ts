@@ -134,8 +134,16 @@ export interface DayGroup {
   totalSpent: number;
   totalIncome: number;
   netAmount: number;
+  cashSpent: number;
+  cashIncome: number;
+  cashNet: number;
+  onlineSpent: number;
+  onlineIncome: number;
+  onlineNet: number;
   cumulativeMonthSpent: number;
   transactions: any[];
+  cashTransactions: any[];
+  onlineTransactions: any[];
 }
 
 export function groupTransactionsByDay(transactions: any[]): DayGroup[] {
@@ -164,7 +172,6 @@ export function groupTransactionsByDay(transactions: any[]): DayGroup[] {
   const sortedDates = Object.keys(groups).sort((a, b) => b.localeCompare(a));
 
   // Compute month-to-date cumulative spend (chronological running total)
-  // To do this accurately: sort dates ascending, compute cumulative spend, then map back
   const ascDates = [...sortedDates].sort((a, b) => a.localeCompare(b));
   const cumulativeMap: Record<string, number> = {};
   let runningSpend = 0;
@@ -182,6 +189,27 @@ export function groupTransactionsByDay(transactions: any[]): DayGroup[] {
       return timeB - timeA;
     });
 
+    const cashTx = grp.transactions.filter(
+      (t) => (t.paymentMethod || "online").toLowerCase() === "cash"
+    );
+    const onlineTx = grp.transactions.filter(
+      (t) => (t.paymentMethod || "online").toLowerCase() !== "cash"
+    );
+
+    const cashSpent = cashTx
+      .filter((t) => t.type === "expense")
+      .reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
+    const cashIncome = cashTx
+      .filter((t) => t.type === "income")
+      .reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
+
+    const onlineSpent = onlineTx
+      .filter((t) => t.type === "expense")
+      .reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
+    const onlineIncome = onlineTx
+      .filter((t) => t.type === "income")
+      .reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
+
     return {
       date: dateKey,
       formattedDate: formatTransactionDate(dateKey),
@@ -189,9 +217,18 @@ export function groupTransactionsByDay(transactions: any[]): DayGroup[] {
       totalSpent: grp.totalSpent,
       totalIncome: grp.totalIncome,
       netAmount: grp.totalIncome - grp.totalSpent,
+      cashSpent,
+      cashIncome,
+      cashNet: cashIncome - cashSpent,
+      onlineSpent,
+      onlineIncome,
+      onlineNet: onlineIncome - onlineSpent,
       cumulativeMonthSpent: cumulativeMap[dateKey] || grp.totalSpent,
       transactions: grp.transactions,
+      cashTransactions: cashTx,
+      onlineTransactions: onlineTx,
     };
   });
 }
+
 

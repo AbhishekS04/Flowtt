@@ -5,11 +5,17 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { Debt } from "@/lib/schema";
 import { formatCurrency, formatTransactionDateTime } from "@/lib/utils";
+import QuickSplitModal from "@/components/QuickSplitModal";
 
-export default function DebtsSection() {
+interface DebtsSectionProps {
+  categories?: { id: string; name: string; icon: string }[];
+}
+
+export default function DebtsSection({ categories = [] }: DebtsSectionProps) {
   const [debts, setDebts] = useState<Debt[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isSplitOpen, setIsSplitOpen] = useState(false);
   const [form, setForm] = useState({
     personName: "",
     amount: "",
@@ -125,20 +131,36 @@ export default function DebtsSection() {
 
   return (
     <div className="space-y-8 animate-fade-in relative z-10 w-full mb-12">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-3xl font-black tracking-tighter text-text-primary">I Will Get / I Give.</h2>
           <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mt-1">
             Settlements & Peer Ledger
           </p>
         </div>
-        <button
-          onClick={() => setIsAddOpen(true)}
-          className="bg-text-primary text-bg font-bold px-6 py-2.5 rounded-full transition-all text-[10px] tracking-widest uppercase shadow-xl active:scale-95 hover:opacity-90"
-        >
-          + NEW SETTLEMENT
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsSplitOpen(true)}
+            className="bg-text-primary/10 hover:bg-text-primary hover:text-bg text-text-primary font-black px-4 py-2.5 rounded-full transition-all text-[10px] tracking-widest uppercase border border-border active:scale-95 shadow-sm flex items-center gap-1.5"
+          >
+            <span>⚡</span>
+            <span>QUICK SPLIT</span>
+          </button>
+          <button
+            onClick={() => setIsAddOpen(true)}
+            className="bg-text-primary text-bg font-black px-6 py-2.5 rounded-full transition-all text-[10px] tracking-widest uppercase shadow-xl active:scale-95 hover:opacity-90"
+          >
+            + NEW SETTLEMENT
+          </button>
+        </div>
       </div>
+
+      <QuickSplitModal
+        isOpen={isSplitOpen}
+        onClose={() => setIsSplitOpen(false)}
+        categories={categories}
+        onSuccess={fetchDebts}
+      />
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

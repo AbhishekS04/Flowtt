@@ -327,7 +327,7 @@ export default function DashboardClient({
             </div>
 
             {/* Debts & IOUs Section */}
-            <DebtsSection />
+            <DebtsSection categories={categories} />
 
             <BudgetCard totalBudget={totalBudget} totalSpent={totalSpent} />
             

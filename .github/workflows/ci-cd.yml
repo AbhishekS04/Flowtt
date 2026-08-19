@@ -1,0 +1,82 @@
+name: Flowtt CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+  pull_request:
+    branches:
+      - main
+      - master
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # 1. Code Quality & Linting
+  lint:
+    name: 🔍 Lint & Code Standards
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Next.js Linter
+        run: npm run lint
+
+  # 2. Type Checking & Production Build
+  build:
+    name: ⚡ TypeScript Check & Production Build
+    runs-on: ubuntu-latest
+    needs: lint
+    env:
+      # Mock environment variables to ensure Next.js builds safely during CI
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_mock_key_for_ci_build' }}
+      CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY || 'sk_test_mock_key_for_ci_build' }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://mock:mock@localhost:5432/mock_db' }}
+      NEXT_TELEMETRY_DISABLED: 1
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Typecheck & Build Next.js Application
+        run: npm run build
+
+  # 3. Security & Dependency Vulnerability Audit
+  security-audit:
+    name: 🛡️ Security & Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Run npm Audit (High / Critical Vulnerabilities)
+        run: npm audit --audit-level=high
+        continue-on-error: true

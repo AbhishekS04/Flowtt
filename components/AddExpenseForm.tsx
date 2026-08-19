@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import QuickSplitModal from "@/components/QuickSplitModal";
 
 interface AddExpenseFormProps {
   onSuccess?: () => void;
@@ -28,6 +29,7 @@ export default function AddExpenseForm({ onSuccess, categories }: AddExpenseForm
   const [paymentMethod, setPaymentMethod] = useState<"online" | "cash">("online");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [isSplitOpen, setIsSplitOpen] = useState(false);
 
   const validate = () => {
     const errs: Record<string, string> = {};
@@ -104,14 +106,31 @@ export default function AddExpenseForm({ onSuccess, categories }: AddExpenseForm
   const selectedCategory = categories.find((c) => c.name === form.category);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-12 group/form">
-      <div className="flex flex-col gap-6">
-        <div>
-          <h2 className="text-4xl font-bold tracking-tighter text-text-primary leading-none">
-            New Transaction.
-          </h2>
-          <p className="text-text-muted text-sm font-medium mt-2">Record a transaction with exact timestamp.</p>
-        </div>
+    <>
+      <QuickSplitModal
+        isOpen={isSplitOpen}
+        onClose={() => setIsSplitOpen(false)}
+        categories={categories}
+        onSuccess={onSuccess}
+      />
+      <form onSubmit={handleSubmit} className="space-y-12 group/form">
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-4xl font-bold tracking-tighter text-text-primary leading-none">
+                New Transaction.
+              </h2>
+              <p className="text-text-muted text-sm font-medium mt-2">Record a transaction with exact timestamp.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsSplitOpen(true)}
+              className="self-start sm:self-auto bg-text-primary/10 hover:bg-text-primary hover:text-bg text-text-primary font-black px-4 py-2 rounded-full transition-all text-[10px] tracking-widest uppercase border border-border flex items-center gap-1.5 shadow-sm active:scale-95"
+            >
+              <span>⚡</span>
+              <span>Split Bill with Friend</span>
+            </button>
+          </div>
 
         {/* Toggles */}
         <div className="flex flex-col sm:flex-row gap-4">
@@ -299,5 +318,6 @@ export default function AddExpenseForm({ onSuccess, categories }: AddExpenseForm
         </button>
       </div>
     </form>
+    </>
   );
 }
