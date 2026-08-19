@@ -54,7 +54,7 @@ export async function POST(request: Request) {
 
   const user = await getOrCreateUser(userId);
   const body = await request.json();
-  const { amount, source, date, note, paymentMethod } = body;
+  const { amount, source, date, note, paymentMethod, createdAt } = body;
 
   if (!amount || amount <= 0) return NextResponse.json({ error: "Amount must be > 0" }, { status: 400 });
   if (!source) return NextResponse.json({ error: "Source is required" }, { status: 400 });
@@ -67,6 +67,7 @@ export async function POST(request: Request) {
     date,
     note: note ?? null,
     paymentMethod: paymentMethod ?? "online",
+    ...(createdAt ? { createdAt: new Date(createdAt) } : {}),
   }).returning();
 
   return NextResponse.json(created[0], { status: 201 });

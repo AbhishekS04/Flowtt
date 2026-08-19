@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
-import { debts, users } from "@/lib/schema";
+import { debts, users, expenses, incomes } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 
 export async function GET() {
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
     const body = await req.json();
-    const { personName, amount, type, paymentMethod, dueDate } = body;
+    const { personName, amount, type, paymentMethod, dueDate, syncBalance } = body;
 
     if (!personName || !amount || !type || !paymentMethod) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -53,9 +53,38 @@ export async function POST(req: Request) {
       dueDate: dueDate || null,
     }).returning();
 
+    // If syncBalance is enabled (default), update wallet balance and log transaction
+    if (syncBalance !== false) {
+      const tzOffset = (new Date()).getTimezoneOffset() * 60000;
+      const today = (new Date(Date.now() - tzOffset)).toISOString().split("T")[0];
+
+      if (type === 'lent') {
+        // User gave money to someone -> records money leaving wallet
+        await db.insert(expenses).values({
+          userId: user.id,
+          amount: amount.toString(),
+          category: "Lent / Given 🤝",
+          date: today,
+          note: `Lent to ${personName}`,
+          paymentMethod,
+        });
+      } else if (type === 'borrowed') {
+        // User received money from someone -> records money entering wallet
+        await db.insert(incomes).values({
+          userId: user.id,
+          amount: amount.toString(),
+          source: `Borrowed: ${personName}`,
+          date: today,
+          note: `Borrowed from ${personName}`,
+          paymentMethod,
+        });
+      }
+    }
+
     return NextResponse.json(newDebt);
   } catch (error) {
     console.error("Error creating debt:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
+

@@ -12,12 +12,16 @@ interface AddExpenseFormProps {
 export default function AddExpenseForm({ onSuccess, categories }: AddExpenseFormProps) {
   const router = useRouter();
   const tzOffset = (new Date()).getTimezoneOffset() * 60000;
-  const today = (new Date(Date.now() - tzOffset)).toISOString().split("T")[0];
+  const nowLocal = new Date(Date.now() - tzOffset);
+  const today = nowLocal.toISOString().split("T")[0];
+  const currentTime = `${String(new Date().getHours()).padStart(2, "0")}:${String(new Date().getMinutes()).padStart(2, "0")}`;
+
   const [form, setForm] = useState({
     amount: "",
     category: "",
     source: "",
     date: today,
+    time: currentTime,
     note: "",
   });
   const [type, setType] = useState<"expense" | "income">("expense");
@@ -45,9 +49,18 @@ export default function AddExpenseForm({ onSuccess, categories }: AddExpenseForm
 
     const isExpense = type === "expense";
     const endpoint = isExpense ? "/api/expenses" : "/api/incomes";
+    
+    // Construct local timestamp ISO
+    const timeParts = (form.time || currentTime).split(":");
+    const hours = parseInt(timeParts[0], 10) || 0;
+    const minutes = parseInt(timeParts[1], 10) || 0;
+    const dateObj = new Date(form.date);
+    dateObj.setHours(hours, minutes, 0, 0);
+
     const body: Record<string, any> = {
       amount: parseFloat(form.amount),
       date: form.date,
+      createdAt: dateObj.toISOString(),
       note: form.note || null,
       paymentMethod,
     };
@@ -64,7 +77,7 @@ export default function AddExpenseForm({ onSuccess, categories }: AddExpenseForm
     setLoading(false);
     if (res.ok) {
       toast.success(isExpense ? "Expense added" : "Income added");
-      setForm({ amount: "", category: "", source: "", date: today, note: "" });
+      setForm({ amount: "", category: "", source: "", date: today, time: currentTime, note: "" });
       if (onSuccess) onSuccess();
       else router.push("/dashboard");
     } else {
@@ -97,7 +110,7 @@ export default function AddExpenseForm({ onSuccess, categories }: AddExpenseForm
           <h2 className="text-4xl font-bold tracking-tighter text-text-primary leading-none">
             New Transaction.
           </h2>
-          <p className="text-text-muted text-sm font-medium mt-2">Record a transaction in seconds.</p>
+          <p className="text-text-muted text-sm font-medium mt-2">Record a transaction with exact timestamp.</p>
         </div>
 
         {/* Toggles */}
@@ -242,23 +255,33 @@ export default function AddExpenseForm({ onSuccess, categories }: AddExpenseForm
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         {field(
           "Date",
           <input
             type="date"
             value={form.date}
             onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))}
-            className={inputClass + " cursor-pointer uppercase font-bold text-[10px] tracking-widest"}
+            className={inputClass + " cursor-pointer uppercase font-bold text-[11px] tracking-widest"}
           />,
           errors.date
+        )}
+
+        {field(
+          "Time",
+          <input
+            type="time"
+            value={form.time}
+            onChange={(e) => setForm((p) => ({ ...p, time: e.target.value }))}
+            className={inputClass + " cursor-pointer font-bold text-[11px] tracking-widest"}
+          />
         )}
 
         {field(
           "Note",
           <input
             type="text"
-            placeholder="What was this for?"
+            placeholder="Description..."
             value={form.note}
             onChange={(e) => setForm((p) => ({ ...p, note: e.target.value }))}
             className={inputClass + " text-sm font-medium"}

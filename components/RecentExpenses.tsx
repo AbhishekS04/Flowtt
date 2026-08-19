@@ -1,5 +1,5 @@
 import { Expense } from "@/lib/schema";
-import { formatCurrency, getCategoryIcon } from "@/lib/utils";
+import { formatCurrency, getCategoryIcon, formatTransactionDateTime } from "@/lib/utils";
 
 interface RecentExpensesProps {
   expenses: any[];
@@ -12,14 +12,14 @@ export default function RecentExpenses({ expenses, categories }: RecentExpensesP
     return custom ? custom.icon : getCategoryIcon(catName);
   };
   return (
-    <div className="bg-card border border-border p-6 md:p-8 shadow-none transition-colors">
+    <div className="bg-card border border-border p-6 md:p-8 shadow-none transition-colors rounded-3xl">
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-[10px] font-bold text-text-muted tracking-widest uppercase">Recent Transactions</h2>
       </div>
 
       {expenses.length === 0 ? (
-        <div className="text-center py-10 text-text-muted text-[10px] tracking-widest uppercase font-bold border border-border">
-          No expenses yet.
+        <div className="text-center py-10 text-text-muted text-[10px] tracking-widest uppercase font-bold border border-border rounded-2xl">
+          No transactions yet.
         </div>
       ) : (
         <div className="space-y-0">
@@ -33,14 +33,21 @@ export default function RecentExpenses({ expenses, categories }: RecentExpensesP
               }`}
             >
               <div className="flex items-center gap-4">
-                <span className="w-10 h-10 bg-transparent border border-border flex items-center justify-center text-lg group-hover/item:border-text-muted transition-colors">
+                <span className="w-10 h-10 bg-card border border-border flex items-center justify-center text-lg group-hover/item:border-text-muted transition-colors rounded-xl">
                   {getIcon(expense.category)}
                 </span>
                 <div>
                   <p className="text-sm font-bold text-text-primary capitalize tracking-tight mb-0.5">
                     {expense.note || expense.category}
                   </p>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted">{expense.date}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted flex items-center gap-2">
+                    <span>{formatTransactionDateTime(expense.date, expense.createdAt)}</span>
+                    {expense.paymentMethod && (
+                      <span className="px-1.5 py-0.2 bg-text-primary/5 rounded text-[8px] opacity-75">
+                        {expense.paymentMethod}
+                      </span>
+                    )}
+                  </p>
                 </div>
               </div>
               <p className={`text-base font-bold tracking-tighter ${isIncome ? "text-green-500" : "text-red-500"}`}>

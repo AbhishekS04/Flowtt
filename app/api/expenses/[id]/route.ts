@@ -18,7 +18,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
   const body = await request.json();
-  const { amount, category, date, note, paymentMethod } = body;
+  const { amount, category, date, note, paymentMethod, createdAt } = body;
 
   const updated = await db
     .update(expenses)
@@ -28,6 +28,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       ...(date !== undefined && { date }),
       ...(note !== undefined && { note }),
       ...(paymentMethod !== undefined && { paymentMethod }),
+      ...(createdAt !== undefined && { createdAt: new Date(createdAt) }),
     })
     .where(and(eq(expenses.id, id), eq(expenses.userId, user.id)))
     .returning();

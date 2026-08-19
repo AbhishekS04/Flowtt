@@ -74,6 +74,20 @@ export default function DashboardClient({
   const upcomingSips = sips.filter(s => s.deductionDate >= todayDate).sort((a,b) => a.deductionDate - b.deductionDate);
   const nextSip = upcomingSips[0] || [...sips].sort((a,b) => a.deductionDate - b.deductionDate)[0];
 
+  const tzOffset = (new Date()).getTimezoneOffset() * 60000;
+  const todayDateStr = (new Date(Date.now() - tzOffset)).toISOString().split("T")[0];
+  const todaySpend = dailyTotals[todayDateStr] || 0;
+  const todayTransactionsCount = allExpenses.filter(e => e.date === todayDateStr).length;
+
+  const [yr, mn] = month.split("-").map(Number);
+  const daysInMonth = new Date(yr, mn, 0).getDate();
+  const currentDayNum = new Date().getDate();
+  const dailyBudgetAllowance = totalBudget > 0 ? (totalBudget / daysInMonth) : 0;
+  const actualDailyAvg = currentDayNum > 0 ? (totalSpent / currentDayNum) : 0;
+  const projectedMonthSpend = actualDailyAvg * daysInMonth;
+  const monthProgressPct = Math.min(100, Math.round((currentDayNum / daysInMonth) * 100));
+  const budgetUsedPct = totalBudget > 0 ? Math.min(100, Math.round((totalSpent / totalBudget) * 100)) : 0;
+
   const getOrdinal = (n: number) => {
     const s = ["th", "st", "nd", "rd"];
     const v = n % 100;
@@ -239,6 +253,76 @@ export default function DashboardClient({
                 <p className={`text-3xl font-black tracking-tighter ${totalSaved >= 0 ? "text-green-500" : "text-red-500"}`}>
                   {totalSaved >= 0 ? "+" : "-"}₹{Math.abs(totalSaved).toFixed(2)}
                 </p>
+              </div>
+            </div>
+
+            {/* Daily Pace & Monthly Spend Progression */}
+            <div className="bg-card border border-border rounded-3xl p-6 md:p-8 shadow-sm space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                    <h2 className="text-[10px] font-black text-text-muted uppercase tracking-[0.25em]">
+                      Daily Pace & Monthly Spend Tracker
+                    </h2>
+                  </div>
+                  <p className="text-xl font-bold tracking-tight text-text-primary mt-1">
+                    Today: {todaySpend > 0 ? `₹${todaySpend.toFixed(2)} spent` : "No expenses yet today"}
+                    {todayTransactionsCount > 0 && (
+                      <span className="text-xs font-normal text-text-muted ml-2">
+                        ({todayTransactionsCount} {todayTransactionsCount === 1 ? "transaction" : "transactions"})
+                      </span>
+                    )}
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => setActiveTab("expenses")}
+                  className="self-start sm:self-auto px-5 py-2.5 rounded-full bg-text-primary/5 hover:bg-text-primary hover:text-bg text-text-primary text-[10px] font-black uppercase tracking-widest transition-all border border-border/50 shadow-sm"
+                >
+                  Daily Feed & Timestamps →
+                </button>
+              </div>
+
+              {/* Progress bars & metrics */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-2">
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Daily Burn Rate</p>
+                  <p className="text-2xl font-black text-text-primary">
+                    ₹{actualDailyAvg.toFixed(2)}
+                    <span className="text-xs text-text-muted font-normal"> / day</span>
+                  </p>
+                  {dailyBudgetAllowance > 0 && (
+                    <p className="text-[9px] text-text-muted">Target budget: ₹{dailyBudgetAllowance.toFixed(2)} / day</p>
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Projected Month Spend</p>
+                  <p className={`text-2xl font-black ${totalBudget > 0 && projectedMonthSpend > totalBudget ? "text-red-500" : "text-text-primary"}`}>
+                    ₹{projectedMonthSpend.toFixed(2)}
+                  </p>
+                  {totalBudget > 0 && (
+                    <p className="text-[9px] text-text-muted">
+                      {projectedMonthSpend <= totalBudget ? "✨ Within budget" : `⚠️ Projected ₹${(projectedMonthSpend - totalBudget).toFixed(2)} over limit`}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-[10px] font-bold text-text-muted uppercase tracking-widest">
+                    <span>Month Elapsed</span>
+                    <span className="text-text-primary font-bold">Day {currentDayNum}/{daysInMonth} ({monthProgressPct}%)</span>
+                  </div>
+                  <div className="w-full bg-border/40 rounded-full h-2 overflow-hidden mt-2">
+                    <div className="h-full bg-text-primary rounded-full transition-all duration-700" style={{ width: `${monthProgressPct}%` }} />
+                  </div>
+                  {totalBudget > 0 && (
+                    <p className="text-[9px] text-text-muted mt-1">
+                      Budget Used: {budgetUsedPct}% (₹{totalSpent.toFixed(2)} / ₹{totalBudget.toFixed(2)})
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 

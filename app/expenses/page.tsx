@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { users, expenses, userCategories } from "@/lib/schema";
+import { users, expenses, incomes, userCategories } from "@/lib/schema";
 import { eq, and, gte, lte } from "drizzle-orm";
 import { getMonthString } from "@/lib/utils";
 import Navbar from "@/components/Navbar";
@@ -20,15 +20,33 @@ export default async function ExpensesPage() {
   const startDate = `${year}-${mon}-01`;
   const endDate = `${year}-${mon}-${new Date(Number(year), Number(mon), 0).getDate()}`;
 
-  const initialExpenses = await db
-    .select()
-    .from(expenses)
-    .where(and(eq(expenses.userId, user.id), gte(expenses.date, startDate), lte(expenses.date, endDate)));
+  const [monthExpenses, monthIncomes, categories] = await Promise.all([
+    db
+      .select()
+      .from(expenses)
+      .where(and(eq(expenses.userId, user.id), gte(expenses.date, startDate), lte(expenses.date, endDate))),
+    db
+      .select()
+      .from(incomes)
+      .where(and(eq(incomes.userId, user.id), gte(incomes.date, startDate), lte(incomes.date, endDate))),
+    db
+      .select({ id: userCategories.id, name: userCategories.name, icon: userCategories.icon })
+      .from(userCategories)
+      .where(eq(userCategories.userId, user.id)),
+  ]);
 
-  const categories = await db
-    .select({ id: userCategories.id, name: userCategories.name, icon: userCategories.icon })
-    .from(userCategories)
-    .where(eq(userCategories.userId, user.id));
+  const initialTransactions = [
+    ...monthExpenses.map((e) => ({ ...e, type: "expense" })),
+    ...monthIncomes.map((i) => ({
+      ...i,
+      category: i.source,
+      type: "income",
+    })),
+  ].sort((a, b) => {
+    const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+    if (dateDiff !== 0) return dateDiff;
+    return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+  });
 
   return (
     <div className="min-h-screen bg-[#0f0f0f]">
@@ -38,8 +56,8 @@ export default async function ExpensesPage() {
           <h1 className="text-xl font-semibold text-[#e5e5e5]">Expenses</h1>
           <p className="text-sm text-[#a3a3a3] mt-1">Manage your spending history.</p>
         </div>
-        <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-5">
-          <ExpenseTable initialExpenses={initialExpenses} categories={categories} />
+        <div className="bg-card border border-border rounded-3xl p-6 shadow-sm">
+          <ExpenseTable initialExpenses={initialTransactions} categories={categories} />
         </div>
       </main>
     </div>

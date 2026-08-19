@@ -65,3 +65,133 @@ export function getDaysRemainingInMonth(): number {
   const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
   return lastDay.getDate() - now.getDate();
 }
+
+export function formatTime(dateOrTimestamp: string | Date | null | undefined): string {
+  if (!dateOrTimestamp) return "";
+  try {
+    const d = typeof dateOrTimestamp === "string" ? new Date(dateOrTimestamp) : dateOrTimestamp;
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  } catch {
+    return "";
+  }
+}
+
+export function formatTransactionDate(dateStr: string): string {
+  if (!dateStr) return "";
+  try {
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const date = new Date(y, m - 1, d);
+    return date.toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
+export function formatRelativeDate(dateStr: string): string {
+  if (!dateStr) return "";
+  try {
+    const tzOffset = (new Date()).getTimezoneOffset() * 60000;
+    const todayStr = (new Date(Date.now() - tzOffset)).toISOString().split("T")[0];
+    const yesterday = new Date(Date.now() - tzOffset - 86400000).toISOString().split("T")[0];
+
+    if (dateStr === todayStr) return "Today";
+    if (dateStr === yesterday) return "Yesterday";
+
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const date = new Date(y, m - 1, d);
+    return date.toLocaleDateString("en-IN", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
+export function formatTransactionDateTime(dateStr: string, createdAt?: string | Date | null | undefined): string {
+  const dateFormatted = formatRelativeDate(dateStr);
+  const timeFormatted = formatTime(createdAt);
+  if (timeFormatted) {
+    return `${dateFormatted} • ${timeFormatted}`;
+  }
+  return dateFormatted;
+}
+
+export interface DayGroup {
+  date: string;
+  formattedDate: string;
+  relativeDate: string;
+  totalSpent: number;
+  totalIncome: number;
+  netAmount: number;
+  cumulativeMonthSpent: number;
+  transactions: any[];
+}
+
+export function groupTransactionsByDay(transactions: any[]): DayGroup[] {
+  const groups: Record<string, { date: string; transactions: any[]; totalSpent: number; totalIncome: number }> = {};
+
+  for (const t of transactions) {
+    const dateKey = t.date;
+    if (!groups[dateKey]) {
+      groups[dateKey] = {
+        date: dateKey,
+        transactions: [],
+        totalSpent: 0,
+        totalIncome: 0,
+      };
+    }
+    groups[dateKey].transactions.push(t);
+    const amount = parseFloat(t.amount || "0");
+    if (t.type === "expense") {
+      groups[dateKey].totalSpent += amount;
+    } else {
+      groups[dateKey].totalIncome += amount;
+    }
+  }
+
+  // Sort dates descending
+  const sortedDates = Object.keys(groups).sort((a, b) => b.localeCompare(a));
+
+  // Compute month-to-date cumulative spend (chronological running total)
+  // To do this accurately: sort dates ascending, compute cumulative spend, then map back
+  const ascDates = [...sortedDates].sort((a, b) => a.localeCompare(b));
+  const cumulativeMap: Record<string, number> = {};
+  let runningSpend = 0;
+  for (const d of ascDates) {
+    runningSpend += groups[d].totalSpent;
+    cumulativeMap[d] = runningSpend;
+  }
+
+  return sortedDates.map((dateKey) => {
+    const grp = groups[dateKey];
+    // Sort transactions within day by createdAt desc
+    grp.transactions.sort((a, b) => {
+      const timeA = new Date(a.createdAt || a.date).getTime();
+      const timeB = new Date(b.createdAt || b.date).getTime();
+      return timeB - timeA;
+    });
+
+    return {
+      date: dateKey,
+      formattedDate: formatTransactionDate(dateKey),
+      relativeDate: formatRelativeDate(dateKey),
+      totalSpent: grp.totalSpent,
+      totalIncome: grp.totalIncome,
+      netAmount: grp.totalIncome - grp.totalSpent,
+      cumulativeMonthSpent: cumulativeMap[dateKey] || grp.totalSpent,
+      transactions: grp.transactions,
+    };
+  });
+}
+

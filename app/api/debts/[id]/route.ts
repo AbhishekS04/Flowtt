@@ -42,20 +42,23 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       const today = (new Date(Date.now() - tzOffset)).toISOString().split("T")[0];
 
       if (debt.type === 'lent') {
+        // User lent money earlier and now gets it back -> records income
         await db.insert(incomes).values({
           userId: user.id,
           amount: debt.amount,
-          source: `Settled Debt: ${debt.personName}`,
+          source: `Debt Recovered: ${debt.personName}`,
           date: today,
+          note: `Settled / Recovered from ${debt.personName}`,
           paymentMethod: debt.paymentMethod,
         });
       } else if (debt.type === 'borrowed') {
+        // User borrowed money earlier and now repays it -> records expense
         await db.insert(expenses).values({
           userId: user.id,
           amount: debt.amount,
-          category: "Debt ✨",
+          category: "Debt Repaid 🤝",
           date: today,
-          note: `Settled Debt to ${debt.personName}`,
+          note: `Repaid debt to ${debt.personName}`,
           paymentMethod: debt.paymentMethod,
         });
       }
