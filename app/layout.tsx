@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
+import Script from "next/script";
 import { Toaster } from "sonner";
 import SmoothScroll from "@/components/SmoothScroll";
 import AppLockWrapper from "@/components/AppLockWrapper";
@@ -30,23 +31,29 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <ClerkProvider>
       <html lang="en" className="dark">
         <body>
-          {/* Unregister any stale service workers (e.g. old Clerk v5 cached chunks) */}
-          <script dangerouslySetInnerHTML={{ __html: `
-            if ('serviceWorker' in navigator) {
-              navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                for (let registration of registrations) {
-                  registration.unregister();
-                  console.log('[Layout] Unregistered SW:', registration.scope);
+          {/* Unregister any stale service workers */}
+          <Script
+            id="sw-cleanup"
+            strategy="afterInteractive"
+            dangerouslySetInnerHTML={{
+              __html: `
+                if ('serviceWorker' in navigator) {
+                  navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                    for (let registration of registrations) {
+                      registration.unregister();
+                    }
+                  });
+                  if ('caches' in window) {
+                    caches.keys().then(function(names) {
+                      for (let name of names) {
+                        caches.delete(name);
+                      }
+                    });
+                  }
                 }
-              });
-              caches.keys().then(function(names) {
-                for (let name of names) {
-                  caches.delete(name);
-                  console.log('[Layout] Deleted cache:', name);
-                }
-              });
-            }
-          ` }} />
+              `,
+            }}
+          />
           <AppLockWrapper>
             <SmoothScroll>
               {children}
